@@ -1,0 +1,1302 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Katalyst Athlete Intake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Layout: fixed top bar (brand + tabs) over a single scrolling column;
+     the form is a sequence of numbered sections, the dashboard is a
+     stat row + filter bar + list that expands rows inline. Single
+     committed dark theme, matching the Katalyst mark (black ground,
+     blue gradient accent). */
+  :root{
+    --bg:#08090c;
+    --surface:#14151c;
+    --surface-2:#1c1e28;
+    --surface-3:#23252f;
+    --border:#2a2c38;
+    --border-soft:#1e2029;
+    --fg:#f3f4f8;
+    --fg-muted:#9699ad;
+    --fg-faint:#5e6178;
+    --accent-1:#7cc6ff;
+    --accent-2:#2f7af0;
+    --accent-3:#1b3fa0;
+    --accent-grad:linear-gradient(135deg,var(--accent-1),var(--accent-2) 55%,var(--accent-3));
+    --good:#36c98a;
+    --good-bg:rgba(54,201,138,.14);
+    --warn:#f0b429;
+    --warn-bg:rgba(240,180,41,.14);
+    --info:#7cc6ff;
+    --info-bg:rgba(124,198,255,.12);
+    --bad:#f0574f;
+    --bad-bg:rgba(240,87,79,.14);
+    --font-display:'Rajdhani',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  html,body{background:var(--bg)}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    color:var(--fg);
+    background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+    padding-inline:16px;
+  }
+  a{color:var(--accent-1)}
+  h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+  p{margin:0}
+  button{font-family:inherit}
+  ::selection{background:var(--accent-3);color:#fff}
+
+  .shell{max-width:880px;margin:0 auto}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+    background:rgba(8,9,12,.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+    margin-inline:-16px;padding-inline:16px;
+  }
+  .topbar-inner{max-width:880px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand svg{flex:none;display:block}
+  .brand-text{display:flex;flex-direction:column;line-height:1.05;min-width:0}
+  .brand-name{font-family:var(--font-display);font-weight:700;font-size:1.15rem;letter-spacing:.06em;color:var(--fg);white-space:nowrap}
+  .brand-sub{font-family:var(--font-display);font-weight:600;font-size:.58rem;letter-spacing:.32em;color:var(--fg-muted);white-space:nowrap}
+  .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px}
+  .tab-btn{
+    appearance:none;border:0;background:transparent;color:var(--fg-muted);
+    font-family:var(--font-display);font-weight:600;letter-spacing:.03em;font-size:.82rem;
+    padding:7px 14px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s;
+  }
+  .tab-btn:hover{color:var(--fg)}
+  .tab-btn.active{background:var(--accent-grad);color:#07101f}
+  .tab-btn[hidden]{display:none}
+
+  .panel{padding-block:28px 64px}
+  .panel[hidden]{display:none}
+
+  /* ---------- intro ---------- */
+  .intro{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:22px 24px;margin-bottom:28px;
+  }
+  .intro h1{font-size:1.5rem;font-weight:700;letter-spacing:.01em;margin-bottom:8px}
+  .intro-lead{font-family:var(--font-body);font-weight:600;font-size:1.05rem;letter-spacing:.01em;color:var(--accent-1);margin-bottom:14px}
+  .intro p{color:var(--fg-muted);font-size:.92rem;line-height:1.6}
+  .intro p + p{margin-top:10px}
+  .offer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:16px}
+  .offer-card{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:10px;padding:11px 12px}
+  .offer-card .eyebrow{font-family:var(--font-display);font-weight:600;font-size:.72rem;letter-spacing:.08em;color:var(--accent-1);text-transform:uppercase}
+  .offer-card p{color:var(--fg-muted);font-size:.8rem;margin-top:4px;line-height:1.45}
+
+  /* ---------- form sections ---------- */
+  form{display:flex;flex-direction:column;gap:18px}
+  .section{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:22px 24px;
+  }
+  .section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+  .section-num{
+    font-family:var(--font-display);font-weight:700;font-size:.78rem;color:var(--accent-1);
+    border:1px solid var(--border);border-radius:999px;padding:2px 10px;letter-spacing:.04em;flex:none;
+  }
+  .section-title{font-size:1.08rem;font-weight:600;letter-spacing:.01em}
+  .section-desc{color:var(--fg-muted);font-size:.84rem;margin:6px 0 18px;line-height:1.5}
+
+  .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .field + .field{margin-top:16px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  @media (max-width:560px){.row2,.row3{grid-template-columns:1fr}}
+
+  label{font-size:.84rem;font-weight:600;color:var(--fg)}
+  label .req{color:var(--accent-1);margin-left:3px}
+  label .opt{color:var(--fg-faint);font-weight:500;margin-left:6px;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}
+  .hint{color:var(--fg-faint);font-size:.76rem}
+
+  input[type=text],input[type=email],input[type=tel],input[type=number],textarea,select{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;
+    color:var(--fg);font-family:var(--font-body);font-size:.92rem;padding:10px 12px;
+    transition:border-color .15s,background .15s;
+  }
+  input::placeholder,textarea::placeholder{color:var(--fg-faint)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent-2);background:var(--surface-3)}
+  textarea{resize:vertical;min-height:72px;line-height:1.5}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--fg-muted) 50%),linear-gradient(135deg,var(--fg-muted) 50%,transparent 50%);background-position:calc(100% - 18px) center,calc(100% - 13px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:32px}
+
+  /* confidence slider */
+  .scale-wrap{margin-top:6px}
+  .scale-anchors{display:flex;justify-content:space-between;gap:16px;font-size:.78rem;color:var(--fg-muted);line-height:1.45;margin-bottom:10px}
+  .scale-anchors span{flex:1}
+  .scale-anchors span:last-child{text-align:right}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;
+    background:var(--accent-grad);margin:14px 0 6px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;
+    border:3px solid var(--accent-2);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.5);
+  }
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--accent-2);cursor:pointer}
+  .scale-readout{display:flex;justify-content:center;align-items:baseline;gap:6px}
+  .scale-readout .num{font-family:var(--font-display);font-weight:700;font-size:1.6rem;color:var(--accent-1)}
+  .scale-readout .of{color:var(--fg-faint);font-size:.8rem}
+
+  /* parent toggle section */
+  .parent-toggle{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+    margin-bottom:0;user-select:none;
+  }
+  .parent-toggle:hover{border-color:var(--accent-3)}
+  .parent-toggle .ptxt strong{display:block;font-size:.92rem}
+  .parent-toggle .ptxt span{display:block;color:var(--fg-muted);font-size:.78rem;margin-top:2px}
+  .chev{transition:transform .2s;color:var(--fg-muted);flex:none}
+  .parent-toggle[aria-expanded="true"] .chev{transform:rotate(180deg)}
+  .parent-body{display:flex;flex-direction:column;gap:16px;padding-top:18px}
+  .parent-body[hidden]{display:none}
+
+  .submit-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+  .btn{
+    appearance:none;border:0;border-radius:10px;cursor:pointer;font-family:var(--font-display);
+    font-weight:700;letter-spacing:.03em;font-size:.92rem;padding:13px 26px;
+    background:var(--accent-grad);color:#07101f;transition:filter .15s,transform .05s;
+  }
+  .btn:hover{filter:brightness(1.08)}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.6;cursor:wait}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--fg)}
+  .btn-ghost:hover{border-color:var(--accent-2);filter:none}
+  .submit-note{color:var(--fg-faint);font-size:.78rem;line-height:1.5}
+  .err{color:var(--bad);font-size:.8rem;display:none}
+  .err.show{display:block}
+
+  /* confirmation / fallback states */
+  .state-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;text-align:center}
+  .state-card[hidden]{display:none}
+  .state-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:var(--good-bg);color:var(--good)}
+  .state-card h2{font-size:1.3rem;margin-bottom:8px}
+  .state-card p{color:var(--fg-muted);font-size:.9rem;line-height:1.6;max-width:46ch;margin:0 auto}
+  .state-card .btn-ghost{margin-top:20px}
+
+  .fallback-box{background:var(--surface-2);border:1px dashed var(--border);border-radius:12px;padding:16px;margin-top:18px;text-align:left}
+  .fallback-box p{color:var(--fg-muted);font-size:.82rem;line-height:1.55;margin-bottom:10px}
+  .fallback-box textarea{min-height:160px;font-size:.78rem;font-family:ui-monospace,monospace;color:var(--fg-muted)}
+  .fallback-actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .copy-email{color:var(--accent-1);font-weight:600;cursor:pointer;background:none;border:none;font-size:.85rem;padding:0;font-family:inherit;text-decoration:underline;text-underline-offset:3px}
+
+  /* ---------- dashboard ---------- */
+  .add-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .add-bar-note{color:var(--fg-faint);font-size:.8rem}
+
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:22px}
+  .stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .stat-tile .n{font-family:var(--font-display);font-weight:700;font-size:1.7rem;color:var(--fg)}
+  .stat-tile .l{color:var(--fg-muted);font-size:.74rem;letter-spacing:.03em;text-transform:uppercase;margin-top:2px}
+
+  .filter-bar{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px}
+  .filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .filter-row input[type=text]{flex:1;min-width:160px}
+  .filter-row select{width:auto;min-width:140px}
+  .chip-group{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{
+    appearance:none;border:1px solid var(--border);background:var(--surface-2);color:var(--fg-muted);
+    border-radius:999px;padding:6px 13px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;
+  }
+  .chip:hover{border-color:var(--accent-2);color:var(--fg)}
+  .chip.active{background:var(--accent-grad);color:#07101f;border-color:transparent}
+  .filter-label{font-size:.72rem;color:var(--fg-faint);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+
+  .list{display:flex;flex-direction:column;gap:10px}
+  .entry{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .entry-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer}
+  .entry-head:hover{background:var(--surface-2)}
+  .entry-avatar{
+    flex:none;width:38px;height:38px;border-radius:50%;background:var(--accent-grad);
+    display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:#07101f;font-size:.95rem;
+  }
+  .entry-main{flex:1;min-width:0}
+  .entry-name{font-weight:600;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .entry-meta{color:var(--fg-muted);font-size:.78rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .entry-side{flex:none;display:flex;align-items:center;gap:10px}
+  .pill{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.02em;white-space:nowrap}
+  .pill-age{background:var(--info-bg);color:var(--info)}
+  .pill-conf{background:var(--surface-3);color:var(--fg-muted);font-variant-numeric:tabular-nums}
+  .status-select{
+    appearance:none;border:1px solid var(--border);border-radius:999px;padding:5px 26px 5px 11px;
+    font-size:.72rem;font-weight:700;cursor:pointer;font-family:var(--font-body);
+    background-position:calc(100% - 10px) center;background-size:6px 6px;
+  }
+  .status-new{background-color:var(--warn-bg);color:var(--warn);border-color:transparent}
+  .status-contacted{background-color:var(--info-bg);color:var(--info);border-color:transparent}
+  .status-scheduled{background-color:var(--good-bg);color:var(--good);border-color:transparent}
+  .status-declined{background-color:var(--bad-bg);color:var(--bad);border-color:transparent}
+  .chev-btn{color:var(--fg-faint);transition:transform .2s;flex:none}
+  .entry.open .chev-btn{transform:rotate(180deg)}
+
+  .entry-detail{display:none;border-top:1px solid var(--border-soft);padding:18px 20px 20px;background:var(--surface-2)}
+  .entry.open .entry-detail{display:block}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+  @media (max-width:640px){.detail-grid{grid-template-columns:1fr}}
+  .detail-item{min-width:0}
+  .detail-item .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);margin-bottom:3px}
+  .detail-item .v{font-size:.86rem;color:var(--fg);line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+  .detail-section-label{font-family:var(--font-display);font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-1);margin:18px 0 10px;border-top:1px solid var(--border-soft);padding-top:16px}
+  .detail-grid:first-of-type + .detail-section-label{margin-top:18px}
+  .no-parent-note{color:var(--fg-faint);font-size:.82rem;font-style:italic;margin-top:18px}
+
+  .empty-state{background:var(--surface);border:1px dashed var(--border);border-radius:16px;padding:40px 24px;text-align:center}
+  .empty-state h3{font-size:1.05rem;margin-bottom:8px}
+  .empty-state p{color:var(--fg-muted);font-size:.86rem;max-width:40ch;margin:0 auto;line-height:1.6}
+  .share-url-box{display:flex;gap:8px;margin:18px auto 0;max-width:420px}
+  .share-url-box input{font-size:.78rem;color:var(--fg-muted)}
+
+  .gate{padding-block:60px;text-align:center;color:var(--fg-muted);font-size:.9rem}
+
+  @media (max-width:480px){
+    .intro{padding:18px}
+    .section{padding:18px}
+    .brand-name{font-size:1rem}
+  }
+</style>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Katalyst mark">
+          <defs>
+            <linearGradient id="kgrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#9cd4ff"/>
+              <stop offset=".55" stop-color="#2f7af0"/>
+              <stop offset="1" stop-color="#132a73"/>
+            </linearGradient>
+          </defs>
+          <path d="M6 4 H14 V21 L30 4 H41 L22 24 L41 44 H30 L14 27 V44 H6 Z" fill="url(#kgrad)"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-name">KATALYST</span>
+          <span class="brand-sub">PERFORMANCE</span>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" id="tabBtnForm" role="tab" aria-selected="true">Intake Form</button>
+        <button class="tab-btn" id="tabBtnDash" role="tab" aria-selected="false" hidden>Inquiries</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== INTAKE FORM PANEL ===================== -->
+  <section class="panel" id="panelForm">
+    <div class="intro">
+      <h1>Welcome to Katalyst Performance.</h1>
+      <p class="intro-lead">Katalyst is the spark that ignites growth.</p>
+      <p>The goal of Katalyst Performance is to help you recognize what's already within you and develop the tools to bring it out when it matters most. Through mental performance coaching, we'll work on building confidence, resilience, self-awareness, and the ability to navigate pressure with intention.</p>
+      <p>This process is about more than stats, playing time, or outcomes. It's about learning how you respond to challenges, how you prepare, what helps you perform at your best, and how you can take greater ownership of your performance.</p>
+      <p>That starts with understanding where you are right now.</p>
+      <p>This intake gives me a chance to get to know you as both an athlete and a person before we begin working together. There are no right or wrong answers. Be honest, take your time, and answer in a way that feels true to you.</p>
+      <div class="offer-grid">
+        <div class="offer-card"><div class="eyebrow">1:1 Sessions</div><p>Individualized work on focus, self-talk, and performing under pressure.</p></div>
+        <div class="offer-card"><div class="eyebrow">Team Workshops</div><p>Mental performance built into team culture, leadership, and dynamics.</p></div>
+      </div>
+    </div>
+
+    <form id="intakeForm" novalidate>
+      <div class="section">
+        <div class="section-head"><span class="section-num">01</span><span class="section-title">Athlete Basics</span></div>
+        <p class="section-desc">Who I'm working with, and how to reach them.</p>
+
+        <div class="row2">
+          <div class="field">
+            <label for="athleteName">Athlete full name<span class="req">*</span></label>
+            <input type="text" id="athleteName" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="age">Age<span class="req">*</span></label>
+            <input type="number" id="age" min="5" max="99" required inputmode="numeric">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="athleteEmail">Athlete email<span class="req">*</span></label>
+            <input type="email" id="athleteEmail" required autocomplete="email" placeholder="you@email.com">
+          </div>
+          <div class="field">
+            <label for="athletePhone">Athlete phone<span class="req">*</span></label>
+            <input type="tel" id="athletePhone" required autocomplete="tel">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="sport">Primary sport<span class="req">*</span></label>
+            <input type="text" id="sport" required>
+          </div>
+          <div class="field">
+            <label for="position">Position<span class="req">*</span></label>
+            <input type="text" id="position" required>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="team">School / Team / Organization<span class="req">*</span></label>
+            <input type="text" id="team" required>
+          </div>
+          <div class="field">
+            <label for="yearsPlaying">Years playing this sport<span class="req">*</span></label>
+            <input type="text" id="yearsPlaying" required inputmode="numeric">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span class="section-num">02</span><span class="section-title">Why Now</span></div>
+        <p class="section-desc">This is the part I care most about. Help me understand what's bringing you here.</p>
+
+        <div class="field">
+          <label for="threeWords">If you had to pick 3 words to describe yourself as an athlete, what would they be?<span class="req">*</span></label>
+          <input type="text" id="threeWords" required placeholder="e.g. driven, hard on myself, loyal">
+        </div>
+        <div class="field">
+          <label for="whyNow">Why are you seeking mental performance coaching right now? What made this feel like the right time?<span class="req">*</span></label>
+          <textarea id="whyNow" required></textarea>
+        </div>
+        <div class="field">
+          <label for="whatsHoldingBack">What's holding you back — in your sport, or outside of it?<span class="req">*</span></label>
+          <textarea id="whatsHoldingBack" required></textarea>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span class="section-num">03</span><span class="section-title">Mental Game Check-In</span></div>
+        <p class="section-desc">A quick read on how your mind shows up in competition right now.</p>
+
+        <div class="field">
+          <label for="mentalChallenge">What feels most challenging for you mentally during games or competitions?<span class="req">*</span></label>
+          <textarea id="mentalChallenge" required></textarea>
+        </div>
+        <div class="field">
+          <label for="mistakeResponse">When you make a mistake, what usually happens in your thoughts or emotions?<span class="req">*</span></label>
+          <textarea id="mistakeResponse" required></textarea>
+        </div>
+        <div class="field">
+          <label>On a scale of 1–10, how confident do you feel in your sport right now?<span class="req">*</span></label>
+          <div class="scale-wrap">
+            <div class="scale-anchors">
+              <span>I often doubt myself and lose confidence easily, especially after mistakes.</span>
+              <span>I trust my skills, stay confident under pressure, and bounce back quickly from mistakes.</span>
+            </div>
+            <input type="range" id="confidence" min="1" max="10" value="5">
+            <div class="scale-readout"><span class="num" id="confidenceNum">5</span><span class="of">/ 10</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span class="section-num">04</span><span class="section-title">Goals &amp; Logistics</span></div>
+        <p class="section-desc">What success looks like, and the practical details that make working together easy.</p>
+
+        <div class="field">
+          <label for="goalsHope">What do you hope mindset coaching will help you with the most?<span class="req">*</span></label>
+          <textarea id="goalsHope" required></textarea>
+        </div>
+        <div class="field">
+          <label for="contactPreference">Best way to reach you<span class="req">*</span></label>
+          <select id="contactPreference" required>
+            <option value="">Select one</option>
+            <option>Email</option>
+            <option>Phone call</option>
+            <option>Text</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="availability">What days or times generally work best for sessions?<span class="req">*</span></label>
+          <input type="text" id="availability" required placeholder="e.g. weekday evenings, Sunday mornings">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="emergencyContactName">Emergency contact name<span class="req">*</span></label>
+            <input type="text" id="emergencyContactName" required>
+          </div>
+          <div class="field">
+            <label for="emergencyContactPhone">Emergency contact phone<span class="req">*</span></label>
+            <input type="tel" id="emergencyContactPhone" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="healthConsiderations">Any current or past mental health treatment, diagnoses, or medications I should be aware of?<span class="req">*</span></label>
+          <textarea id="healthConsiderations" required placeholder="Write &quot;none&quot; if this doesn't apply"></textarea>
+          <span class="hint">This helps me support you appropriately and refer out if something is better suited to a licensed professional. It stays confidential — see the confidentiality terms below.</span>
+        </div>
+        <div class="field">
+          <label for="howHeard">How did you hear about Katalyst?<span class="req">*</span></label>
+          <input type="text" id="howHeard" required>
+        </div>
+        <div class="field">
+          <label for="additionalNotes">Anything else I should know before we begin?<span class="req">*</span></label>
+          <textarea id="additionalNotes" required placeholder="Write &quot;nothing else for now&quot; if that's the case"></textarea>
+        </div>
+      </div>
+
+      <div class="section" id="parentSection" hidden>
+        <div class="section-head"><span class="section-num">05</span><span class="section-title">Parent / Guardian Perspective</span></div>
+        <p class="section-desc">Shown because the athlete is under 18. I value a parent's view as part of the athlete's support system — this section is required for minors.</p>
+
+        <div class="row2">
+          <div class="field">
+            <label for="parentName">Parent / guardian full name<span class="req">*</span></label>
+            <input type="text" id="parentName" required>
+          </div>
+          <div class="field">
+            <label for="parentRelationship">Relationship to athlete<span class="req">*</span></label>
+            <input type="text" id="parentRelationship" required placeholder="e.g. mother, father, guardian">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="parentEmail">Email address<span class="req">*</span></label>
+            <input type="email" id="parentEmail" required>
+          </div>
+          <div class="field">
+            <label for="parentPhone">Phone number<span class="req">*</span></label>
+            <input type="tel" id="parentPhone" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="parentWhyCoaching">What prompted you to seek mental performance coaching for your athlete?<span class="req">*</span></label>
+          <textarea id="parentWhyCoaching" required></textarea>
+        </div>
+        <div class="field">
+          <label for="parentChallenges">What mental or emotional challenges do you see showing up most often?<span class="req">*</span></label>
+          <textarea id="parentChallenges" required></textarea>
+        </div>
+        <div class="field">
+          <label for="parentPressureResponse">How does your athlete typically respond to pressure, mistakes, or adversity?<span class="req">*</span></label>
+          <textarea id="parentPressureResponse" required></textarea>
+        </div>
+        <div class="field">
+          <label for="parentSuccessLook">What would success look like after 12 weeks of mindset coaching?<span class="req">*</span></label>
+          <textarea id="parentSuccessLook" required></textarea>
+        </div>
+        <div class="field">
+          <label for="parentOneYear">One year from now, what would need to be true for you to feel this was a great decision?<span class="req">*</span></label>
+          <textarea id="parentOneYear" required></textarea>
+        </div>
+        <div class="field">
+          <label for="parentStartTiming">How soon are you hoping they could start, if selected?<span class="req">*</span></label>
+          <select id="parentStartTiming" required>
+            <option value="">Select one</option>
+            <option>As soon as possible</option>
+            <option>Within 2 weeks</option>
+            <option>Within a month</option>
+            <option>Just exploring for now</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section" id="consentSection">
+        <div class="section-head"><span class="section-num">06</span><span class="section-title">Confidentiality &amp; Consent</span></div>
+        <p class="section-desc">Please read before submitting.</p>
+
+        <p style="color:var(--fg-muted);font-size:.86rem;line-height:1.65">
+          Before we get started, here's what's good to know. This is mental performance coaching — we're working on the mental side of your game together. It's not therapy or medical treatment, and if something comes up that would be better supported by a licensed therapist or doctor, I'll tell you, and I'll help you find the right person.
+        </p>
+        <p style="color:var(--fg-muted);font-size:.86rem;line-height:1.65;margin-top:12px">
+          <strong style="color:var(--fg)">What you tell me stays between us.</strong> If you're under 18, I'll sometimes share general themes with a parent or guardian so they can support you at home — but the specifics of what we talk about are yours, not something I hand over, unless you want me to. The one exception: if I'm ever worried about your safety or someone else's, or a minor tells me about abuse or neglect, or the law requires it, I'll take the steps I need to keep you safe.
+        </p>
+        <p style="color:var(--fg-muted);font-size:.86rem;line-height:1.65;margin-top:12px">
+          This is something you're choosing to do, and you can step away from it whenever you want. I can't promise a specific result — what you get out of this depends on both of us showing up for it. And since email and text aren't fully private, let's save anything sensitive for when we're actually talking.
+        </p>
+
+        <div id="consentAdultBlock" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border-soft)">
+          <div class="field" style="flex-direction:row;align-items:flex-start;gap:10px">
+            <input type="checkbox" id="consentAdultCheck" required style="margin-top:3px;width:16px;height:16px;flex:none;accent-color:var(--accent-2)">
+            <label for="consentAdultCheck" style="font-weight:500">I have read and understand the confidentiality terms above, and I voluntarily consent to participate in mental performance coaching with Katalyst Performance.<span class="req">*</span></label>
+          </div>
+          <div class="field">
+            <label for="consentAdultSignature">Signature — type your full legal name<span class="req">*</span></label>
+            <input type="text" id="consentAdultSignature" required>
+          </div>
+        </div>
+
+        <div id="consentMinorBlock" hidden style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border-soft)">
+          <div class="field" style="flex-direction:row;align-items:flex-start;gap:10px">
+            <input type="checkbox" id="consentAthleteAssentCheck" required style="margin-top:3px;width:16px;height:16px;flex:none;accent-color:var(--accent-2)">
+            <label for="consentAthleteAssentCheck" style="font-weight:500">Athlete: I understand what this coaching involves, and I'm willing to take part.<span class="req">*</span></label>
+          </div>
+          <div class="field">
+            <label for="consentAthleteSignatureMinor">Athlete signature — type your full name<span class="req">*</span></label>
+            <input type="text" id="consentAthleteSignatureMinor" required>
+          </div>
+          <div class="field" style="flex-direction:row;align-items:flex-start;gap:10px;margin-top:16px">
+            <input type="checkbox" id="consentParentCheck" required style="margin-top:3px;width:16px;height:16px;flex:none;accent-color:var(--accent-2)">
+            <label for="consentParentCheck" style="font-weight:500">Parent/guardian: I have read and understand the confidentiality terms above, and I give permission for my athlete to participate in mental performance coaching with Katalyst Performance.<span class="req">*</span></label>
+          </div>
+          <div class="field">
+            <label for="consentParentSignature">Parent/guardian signature — type your full legal name<span class="req">*</span></label>
+            <input type="text" id="consentParentSignature" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="consentDate">Date</label>
+          <input type="text" id="consentDate" readonly>
+        </div>
+      </div>
+
+      <div class="field">
+        <p class="err" id="formErr">Please fill in the required fields above before submitting.</p>
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="btn" id="submitBtn">Submit Intake</button>
+        <span class="submit-note">Sent directly to Katalyst Performance. Not visible to other families.</span>
+      </div>
+    </form>
+
+    <!-- confirmation state -->
+    <div class="state-card" id="thankYouCard" hidden>
+      <div class="state-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Got it — thank you.</h2>
+      <p>Your intake has been sent to Katalyst Performance. I'll be in touch soon to talk next steps.</p>
+      <button class="btn btn-ghost" id="submitAnotherBtn" type="button">Submit another</button>
+    </div>
+
+    <!-- fallback state (db unavailable / write failed) -->
+    <div class="state-card" id="fallbackCard" hidden>
+      <div class="state-icon" style="background:var(--warn-bg);color:var(--warn)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 3.9L2.8 17a1.5 1.5 0 001.3 2.3h15.8a1.5 1.5 0 001.3-2.3L13.7 3.9a1.5 1.5 0 00-2.6 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Couldn't save that automatically</h2>
+      <p>That can happen if you're not signed in to Claude. No problem — copy your responses below and email them over, and I'll get it from there.</p>
+      <div class="fallback-box">
+        <p>Copy the summary below and send it to <button class="copy-email" id="copyEmailBtn" type="button">kaleighedwards222@gmail.com</button></p>
+        <textarea id="fallbackText" readonly></textarea>
+        <div class="fallback-actions">
+          <button class="btn btn-ghost" id="copySummaryBtn" type="button">Copy summary</button>
+          <button class="btn btn-ghost" id="backToFormBtn" type="button">Back to form</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DASHBOARD PANEL ===================== -->
+  <section class="panel" id="panelDash" hidden>
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="add-bar">
+      <button class="btn btn-ghost" id="addInquiryBtn" type="button">+ Log an inquiry</button>
+      <span class="add-bar-note">For calls, texts, DMs, or emails that didn't come through the form.</span>
+    </div>
+
+    <div class="section" id="addInquiryForm" hidden style="margin-bottom:18px">
+      <div class="section-head"><span class="section-title">Log a new inquiry</span></div>
+      <p class="section-desc">Paste in whatever details you have — only name and age are required.</p>
+      <div class="row2">
+        <div class="field">
+          <label for="qaName">Athlete name<span class="req">*</span></label>
+          <input type="text" id="qaName" required>
+        </div>
+        <div class="field">
+          <label for="qaAge">Age<span class="req">*</span></label>
+          <input type="number" id="qaAge" min="5" max="99" required inputmode="numeric">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="qaSport">Sport</label>
+          <input type="text" id="qaSport">
+        </div>
+        <div class="field">
+          <label for="qaTeam">School / Team</label>
+          <input type="text" id="qaTeam">
+        </div>
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label for="qaContactName">Contact name</label>
+          <input type="text" id="qaContactName" placeholder="parent or athlete">
+        </div>
+        <div class="field">
+          <label for="qaContactEmail">Contact email</label>
+          <input type="email" id="qaContactEmail">
+        </div>
+        <div class="field">
+          <label for="qaContactPhone">Contact phone</label>
+          <input type="tel" id="qaContactPhone">
+        </div>
+      </div>
+      <div class="field">
+        <label for="qaSource">How did this come in?</label>
+        <select id="qaSource">
+          <option>Phone call</option>
+          <option>Email</option>
+          <option>Text / DM</option>
+          <option>Referral</option>
+          <option>In person</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="qaNotes">Notes<span class="opt">paste details, context, anything they told you</span></label>
+        <textarea id="qaNotes" style="min-height:110px"></textarea>
+      </div>
+      <p class="err" id="qaErr">Athlete name and age are required.</p>
+      <div class="submit-row">
+        <button class="btn" id="qaSaveBtn" type="button">Save inquiry</button>
+        <button class="btn-ghost btn" id="qaCancelBtn" type="button">Cancel</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="Search by name, team, or sport…">
+        <select id="sortSelect">
+          <option value="new">Newest first</option>
+          <option value="old">Oldest first</option>
+          <option value="age-asc">Age: low to high</option>
+          <option value="age-desc">Age: high to low</option>
+          <option value="conf-asc">Confidence: low to high</option>
+          <option value="conf-desc">Confidence: high to low</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Age</span>
+        <div class="chip-group" id="ageChips">
+          <button class="chip active" data-min="0" data-max="999">All</button>
+          <button class="chip" data-min="0" data-max="12">8–12</button>
+          <button class="chip" data-min="13" data-max="15">13–15</button>
+          <button class="chip" data-min="16" data-max="18">16–18</button>
+          <button class="chip" data-min="19" data-max="22">19–22</button>
+          <button class="chip" data-min="23" data-max="999">23+</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Status</span>
+        <div class="chip-group" id="statusChips">
+          <button class="chip active" data-status="all">All</button>
+          <button class="chip" data-status="new">New</button>
+          <button class="chip" data-status="contacted">Contacted</button>
+          <button class="chip" data-status="scheduled">Scheduled</button>
+          <button class="chip" data-status="declined">Declined</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="list" id="entryList"></div>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <h3>No inquiries yet</h3>
+      <p>Once a family submits the intake form, it'll show up here — filterable by age, searchable, and ready to triage.</p>
+      <div class="share-url-box">
+        <input type="text" id="shareUrlInput" readonly>
+        <button class="btn btn-ghost" id="copyShareBtn" type="button">Copy link</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="gate" id="dashGate" hidden>
+    <p>This view is private to Katalyst Performance.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- small helpers ----------
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return (s==null?"":String(s)); }
+  function fmtDate(iso){
+    try{
+      var d = new Date(iso);
+      return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}) + " · " +
+             d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+    }catch(e){ return ""; }
+  }
+  function initials(name){
+    name = (name||"").trim();
+    if(!name) return "?";
+    var parts = name.split(/\s+/);
+    return ((parts[0]||"")[0]||"").toUpperCase() + ((parts[1]||"")[0]||"").toUpperCase();
+  }
+
+  // ---------- tabs ----------
+  var tabBtnForm = $("tabBtnForm"), tabBtnDash = $("tabBtnDash");
+  var panelForm = $("panelForm"), panelDash = $("panelDash");
+  function showForm(){
+    tabBtnForm.classList.add("active"); tabBtnForm.setAttribute("aria-selected","true");
+    tabBtnDash.classList.remove("active"); tabBtnDash.setAttribute("aria-selected","false");
+    panelForm.hidden = false; panelDash.hidden = true;
+  }
+  function showDash(){
+    tabBtnDash.classList.add("active"); tabBtnDash.setAttribute("aria-selected","true");
+    tabBtnForm.classList.remove("active"); tabBtnForm.setAttribute("aria-selected","false");
+    panelForm.hidden = true; panelDash.hidden = false;
+  }
+  tabBtnForm.addEventListener("click", showForm);
+  tabBtnDash.addEventListener("click", showDash);
+
+  // ---------- age-driven sections: parent/guardian + consent ----------
+  var parentSection = $("parentSection");
+  var consentAdultBlock = $("consentAdultBlock"), consentMinorBlock = $("consentMinorBlock");
+  function isMinorAge(){
+    var v = parseInt($("age").value,10);
+    return !isNaN(v) && v > 0 && v < 18;
+  }
+  function updateAgeDependentSections(){
+    var minor = isMinorAge();
+    parentSection.hidden = !minor;
+    consentMinorBlock.hidden = !minor;
+    consentAdultBlock.hidden = minor;
+  }
+  $("age").addEventListener("input", updateAgeDependentSections);
+  updateAgeDependentSections();
+
+  // auto-fill today's date on the consent form
+  (function(){
+    try{
+      var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+      $("consentDate").value = today;
+    }catch(e){}
+  })();
+
+  // ---------- confidence slider ----------
+  var confidence = $("confidence"), confidenceNum = $("confidenceNum");
+  confidence.addEventListener("input", function(){ confidenceNum.textContent = this.value; });
+
+  // ---------- form collect / validate ----------
+  function collectData(){
+    var minor = isMinorAge();
+    return {
+      submittedAt: new Date().toISOString(),
+      athleteName: $("athleteName").value.trim(),
+      age: parseInt($("age").value,10) || null,
+      athleteEmail: $("athleteEmail").value.trim(),
+      athletePhone: $("athletePhone").value.trim(),
+      sport: $("sport").value.trim(),
+      position: $("position").value.trim(),
+      team: $("team").value.trim(),
+      yearsPlaying: $("yearsPlaying").value.trim(),
+      threeWords: $("threeWords").value.trim(),
+      whyNow: $("whyNow").value.trim(),
+      whatsHoldingBack: $("whatsHoldingBack").value.trim(),
+      mentalChallenge: $("mentalChallenge").value.trim(),
+      mistakeResponse: $("mistakeResponse").value.trim(),
+      confidenceScore: parseInt(confidence.value,10),
+      goalsHope: $("goalsHope").value.trim(),
+      contactPreference: $("contactPreference").value,
+      availability: $("availability").value.trim(),
+      emergencyContactName: $("emergencyContactName").value.trim(),
+      emergencyContactPhone: $("emergencyContactPhone").value.trim(),
+      healthConsiderations: $("healthConsiderations").value.trim(),
+      howHeard: $("howHeard").value.trim(),
+      additionalNotes: $("additionalNotes").value.trim(),
+      hasParentSection: minor,
+      parentName: $("parentName").value.trim(),
+      parentEmail: $("parentEmail").value.trim(),
+      parentPhone: $("parentPhone").value.trim(),
+      parentRelationship: $("parentRelationship").value.trim(),
+      parentWhyCoaching: $("parentWhyCoaching").value.trim(),
+      parentChallenges: $("parentChallenges").value.trim(),
+      parentPressureResponse: $("parentPressureResponse").value.trim(),
+      parentSuccessLook: $("parentSuccessLook").value.trim(),
+      parentOneYear: $("parentOneYear").value.trim(),
+      parentStartTiming: $("parentStartTiming").value,
+      consentDate: $("consentDate").value,
+      athleteSignature: minor ? $("consentAthleteSignatureMinor").value.trim() : $("consentAdultSignature").value.trim(),
+      athleteConsentGiven: minor ? $("consentAthleteAssentCheck").checked : $("consentAdultCheck").checked,
+      parentSignature: minor ? $("consentParentSignature").value.trim() : "",
+      parentConsentGiven: minor ? $("consentParentCheck").checked : null,
+      status: "new"
+    };
+  }
+
+  function validate(){
+    var form = $("intakeForm");
+    var ok = true;
+    form.querySelectorAll("[required]").forEach(function(el){
+      if(el.closest("[hidden]")) return;
+      if(el.type === "checkbox"){
+        if(!el.checked) ok = false;
+      } else if(!el.value || !el.value.toString().trim()){
+        ok = false;
+      }
+    });
+    var ageVal = parseInt($("age").value,10);
+    if(isNaN(ageVal) || ageVal < 5 || ageVal > 99) ok = false;
+    return ok;
+  }
+
+  function summaryText(d){
+    var lines = [
+      "KATALYST PERFORMANCE — ATHLETE INTAKE",
+      "",
+      "Athlete: " + d.athleteName + " (age " + (d.age||"—") + ")",
+      "Email: " + d.athleteEmail + (d.athletePhone ? "  |  Phone: " + d.athletePhone : ""),
+      "Sport: " + d.sport + (d.position ? " — " + d.position : ""),
+      "Team/School: " + d.team + "  |  Years playing: " + d.yearsPlaying,
+      "",
+      "Three words: " + d.threeWords,
+      "Why seeking coaching now: " + d.whyNow,
+      "What's holding them back: " + d.whatsHoldingBack,
+      "",
+      "Mental challenge in competition: " + d.mentalChallenge,
+      "Response to mistakes: " + d.mistakeResponse,
+      "Confidence (1-10): " + d.confidenceScore,
+      "",
+      "Hopes coaching helps with: " + d.goalsHope,
+      "Best way to reach: " + d.contactPreference,
+      "Availability: " + d.availability,
+      "Emergency contact: " + d.emergencyContactName + " — " + d.emergencyContactPhone,
+      "Health considerations: " + d.healthConsiderations,
+      "How they heard about Katalyst: " + d.howHeard,
+      "Additional notes: " + d.additionalNotes
+    ];
+    if(d.hasParentSection){
+      lines.push("", "— PARENT / GUARDIAN —",
+        "Name: " + (d.parentName||"—") + "  (" + (d.parentRelationship||"—") + ")",
+        "Email: " + (d.parentEmail||"—") + "  |  Phone: " + (d.parentPhone||"—"),
+        "Why seeking coaching: " + (d.parentWhyCoaching||"—"),
+        "Challenges observed: " + (d.parentChallenges||"—"),
+        "Response to pressure/mistakes: " + (d.parentPressureResponse||"—"),
+        "Success after 12 weeks: " + (d.parentSuccessLook||"—"),
+        "One year from now: " + (d.parentOneYear||"—"),
+        "Hoping to start: " + (d.parentStartTiming||"—"));
+    }
+    lines.push("", "— CONFIDENTIALITY & CONSENT —",
+      "Date: " + d.consentDate,
+      "Athlete consent/assent given: " + (d.athleteConsentGiven ? "Yes" : "No") + "  |  Signature: " + (d.athleteSignature||"—"),
+      d.hasParentSection ? ("Parent consent given: " + (d.parentConsentGiven ? "Yes" : "No") + "  |  Signature: " + (d.parentSignature||"—")) : null
+    );
+    return lines.filter(function(l){ return l !== null; }).join("\n");
+  }
+
+  function showFallback(data){
+    $("fallbackText").value = summaryText(data);
+    $("intakeForm").hidden = true;
+    $("thankYouCard").hidden = true;
+    $("fallbackCard").hidden = false;
+  }
+
+  $("copySummaryBtn").addEventListener("click", function(){
+    var ta = $("fallbackText");
+    var txt = ta.value;
+    var btn = this;
+    function done(){ var old=btn.textContent; btn.textContent="Copied"; setTimeout(function(){btn.textContent=old;},1500); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done).catch(function(){ ta.select(); done(); });
+    } else { ta.select(); done(); }
+  });
+  $("copyEmailBtn").addEventListener("click", function(){
+    var email = this.textContent;
+    var btn = this;
+    function done(){ var old=btn.textContent; btn.textContent="Copied!"; setTimeout(function(){btn.textContent=old;},1500); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(email).then(done).catch(done);
+    } else { done(); }
+  });
+  $("backToFormBtn").addEventListener("click", function(){
+    $("fallbackCard").hidden = true;
+    $("intakeForm").hidden = false;
+  });
+  $("submitAnotherBtn").addEventListener("click", function(){
+    $("intakeForm").reset();
+    confidenceNum.textContent = "5";
+    updateAgeDependentSections();
+    try{ $("consentDate").value = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"}); }catch(e){}
+    $("thankYouCard").hidden = true;
+    $("intakeForm").hidden = false;
+  });
+
+  // ---------- capabilities ----------
+  var dbNs = null, userNs = null, isOwnerFlag = false;
+  var unsubscribeSubmissions = null;
+
+  function initCapabilities(){
+    if(!window.claude || !window.claude.use) return;
+    window.claude.use("user").then(function(u){
+      userNs = u;
+      if(!u) return;
+      u.canEdit().then(function(canEdit){
+        isOwnerFlag = !!canEdit;
+        if(isOwnerFlag){
+          tabBtnDash.hidden = false;
+          subscribeDash();
+        }
+      }).catch(function(){});
+    }).catch(function(){});
+    window.claude.use("db").then(function(d){ dbNs = d; }).catch(function(){});
+  }
+  initCapabilities();
+
+  // ---------- form submit ----------
+  $("intakeForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    $("formErr").classList.remove("show");
+    if(!validate()){
+      $("formErr").classList.add("show");
+      $("formErr").scrollIntoView({behavior:"smooth", block:"center"});
+      return;
+    }
+    var data = collectData();
+    var btn = $("submitBtn");
+    btn.disabled = true; btn.textContent = "Sending…";
+
+    function finishOk(){
+      btn.disabled = false; btn.textContent = "Submit Intake";
+      $("intakeForm").hidden = true;
+      $("thankYouCard").hidden = false;
+      window.scrollTo(0,0);
+    }
+    function finishFallback(){
+      btn.disabled = false; btn.textContent = "Submit Intake";
+      showFallback(data);
+      window.scrollTo(0,0);
+    }
+
+    // Submit structured intake data to Formspree via AJAX
+    fetch("https://formspree.io/f/mqppqowv", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+    .then(function(response) {
+      if (response.ok) {
+        // Also sync to Firestore if running in environment with DB available
+        if (window.claude && window.claude.use) {
+          window.claude.use("db").then(function(d){
+            if (d) d.collection("submissions").add(data).catch(function(){});
+          }).catch(function(){});
+        }
+        finishOk();
+      } else {
+        finishFallback();
+      }
+    })
+    .catch(finishFallback);
+  });
+
+  // ---------- dashboard ----------
+  var allSubs = [];
+  var ageFilter = {min:0,max:999};
+  var statusFilter = "all";
+  var searchTerm = "";
+  var sortMode = "new";
+
+  function subscribeDash(){
+    if(!dbNs){
+      window.claude.use("db").then(function(d){
+        dbNs = d;
+        if(d) doSubscribe(d); else renderDashEmpty(true);
+      }).catch(function(){ renderDashEmpty(true); });
+      return;
+    }
+    doSubscribe(dbNs);
+  }
+  function doSubscribe(d){
+    if(unsubscribeSubmissions) return;
+    var q = d.collection("submissions").orderBy("submittedAt","desc").limit(500);
+    unsubscribeSubmissions = q.onSnapshot(function(snap){
+      allSubs = snap.docs.map(function(doc){
+        var data = doc.data() || {};
+        data.id = doc.id;
+        return data;
+      });
+      renderDash();
+    }, function(err){
+      renderDashEmpty(true);
+    });
+  }
+
+  // ---------- quick add (owner logs an inquiry manually) ----------
+  var addBtn = $("addInquiryBtn"), addForm = $("addInquiryForm");
+  addBtn.addEventListener("click", function(){
+    addForm.hidden = !addForm.hidden;
+    if(!addForm.hidden) $("qaName").focus();
+  });
+  $("qaCancelBtn").addEventListener("click", function(){
+    addForm.hidden = true;
+    ["qaName","qaAge","qaSport","qaTeam","qaContactName","qaContactEmail","qaContactPhone","qaNotes"].forEach(function(id){ $(id).value = ""; });
+    $("qaErr").classList.remove("show");
+  });
+  $("qaSaveBtn").addEventListener("click", function(){
+    $("qaErr").classList.remove("show");
+    var name = $("qaName").value.trim();
+    var age = parseInt($("qaAge").value,10);
+    if(!name || isNaN(age) || age < 5 || age > 99){
+      $("qaErr").classList.add("show");
+      return;
+    }
+    var data = {
+      submittedAt: new Date().toISOString(),
+      athleteName: name,
+      age: age,
+      athleteEmail: "", athletePhone: "",
+      sport: $("qaSport").value.trim(),
+      position: "", team: $("qaTeam").value.trim(), yearsPlaying: "",
+      threeWords: "", whyNow: "", whatsHoldingBack: "",
+      mentalChallenge: "", mistakeResponse: "", confidenceScore: null,
+      goalsHope: "",
+      contactPreference: "", availability: "",
+      emergencyContactName: "", emergencyContactPhone: "", healthConsiderations: "",
+      howHeard: $("qaSource").value,
+      additionalNotes: $("qaNotes").value.trim(),
+      hasParentSection: false,
+      parentName: $("qaContactName").value.trim(),
+      parentEmail: $("qaContactEmail").value.trim(),
+      parentPhone: $("qaContactPhone").value.trim(),
+      parentRelationship: "", parentWhyCoaching: "", parentChallenges: "",
+      parentPressureResponse: "", parentSuccessLook: "", parentOneYear: "",
+      parentStartTiming: "",
+      consentDate: "", athleteSignature: "", athleteConsentGiven: null,
+      parentSignature: "", parentConsentGiven: null,
+      status: "new",
+      loggedByOwner: true
+    };
+    var btn = $("qaSaveBtn");
+    btn.disabled = true; btn.textContent = "Saving…";
+    function done(){
+      btn.disabled = false; btn.textContent = "Save inquiry";
+      addForm.hidden = true;
+      $("qaCancelBtn").click();
+    }
+    if(dbNs){
+      dbNs.collection("submissions").add(data).then(done).catch(function(){
+        btn.disabled = false; btn.textContent = "Save inquiry";
+        $("qaErr").textContent = "Couldn't save — check your connection and try again.";
+        $("qaErr").classList.add("show");
+      });
+    } else {
+      window.claude.use("db").then(function(d){
+        dbNs = d;
+        if(!d){ btn.disabled=false; btn.textContent="Save inquiry"; return; }
+        d.collection("submissions").add(data).then(done).catch(function(){
+          btn.disabled = false; btn.textContent = "Save inquiry";
+        });
+      });
+    }
+  });
+
+  $("ageChips").addEventListener("click", function(e){
+    var btn = e.target.closest(".chip");
+    if(!btn) return;
+    this.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("active"); });
+    btn.classList.add("active");
+    ageFilter = {min:parseInt(btn.dataset.min,10), max:parseInt(btn.dataset.max,10)};
+    renderDash();
+  });
+  $("statusChips").addEventListener("click", function(e){
+    var btn = e.target.closest(".chip");
+    if(!btn) return;
+    this.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("active"); });
+    btn.classList.add("active");
+    statusFilter = btn.dataset.status;
+    renderDash();
+  });
+  $("searchInput").addEventListener("input", function(){
+    searchTerm = this.value.trim().toLowerCase();
+    renderDash();
+  });
+  $("sortSelect").addEventListener("change", function(){
+    sortMode = this.value;
+    renderDash();
+  });
+
+  function statusLabel(s){
+    return {new:"New", contacted:"Contacted", scheduled:"Scheduled", declined:"Declined"}[s] || "New";
+  }
+
+  function renderStats(list){
+    var total = allSubs.length;
+    var now = Date.now();
+    var weekAgo = now - 7*24*60*60*1000;
+    var thisWeek = allSubs.filter(function(s){ return new Date(s.submittedAt).getTime() >= weekAgo; }).length;
+    var newCount = allSubs.filter(function(s){ return (s.status||"new") === "new"; }).length;
+    var confs = allSubs.map(function(s){ return s.confidenceScore; }).filter(function(n){ return typeof n === "number"; });
+    var avgConf = confs.length ? (confs.reduce(function(a,b){return a+b;},0)/confs.length).toFixed(1) : "—";
+    $("statRow").innerHTML = [
+      ["Total inquiries", total],
+      ["New", newCount],
+      ["This week", thisWeek],
+      ["Avg. confidence", avgConf]
+    ].map(function(s){
+      return '<div class="stat-tile"><div class="n">'+esc(s[1])+'</div><div class="l">'+esc(s[0])+'</div></div>';
+    }).join("");
+  }
+
+  function renderDashEmpty(noDb){
+    $("statRow").innerHTML = "";
+    $("entryList").innerHTML = "";
+    $("emptyState").hidden = false;
+    $("shareUrlInput").value = window.location.href;
+  }
+
+  function renderDash(){
+    if(!allSubs.length){
+      renderDashEmpty(false);
+      return;
+    }
+    $("emptyState").hidden = true;
+    renderStats(allSubs);
+
+    var list = allSubs.filter(function(s){
+      var age = typeof s.age === "number" ? s.age : -1;
+      if(age < ageFilter.min || age > ageFilter.max) return false;
+      if(statusFilter !== "all" && (s.status||"new") !== statusFilter) return false;
+      if(searchTerm){
+        var hay = [s.athleteName,s.team,s.sport].join(" ").toLowerCase();
+        if(hay.indexOf(searchTerm) === -1) return false;
+      }
+      return true;
+    });
+
+    list.sort(function(a,b){
+      switch(sortMode){
+        case "old": return new Date(a.submittedAt) - new Date(b.submittedAt);
+        case "age-asc": return (a.age||0) - (b.age||0);
+        case "age-desc": return (b.age||0) - (a.age||0);
+        case "conf-asc": return (a.confidenceScore||0) - (b.confidenceScore||0);
+        case "conf-desc": return (b.confidenceScore||0) - (a.confidenceScore||0);
+        default: return new Date(b.submittedAt) - new Date(a.submittedAt);
+      }
+    });
+
+    if(!list.length){
+      $("entryList").innerHTML = '<div class="empty-state"><h3>No matches</h3><p>No inquiries match these filters. Try widening the age range or clearing the search.</p></div>';
+      return;
+    }
+
+    $("entryList").innerHTML = list.map(renderEntry).join("");
+
+    // wire interactions
+    $("entryList").querySelectorAll(".entry-head").forEach(function(head){
+      head.addEventListener("click", function(){
+        head.closest(".entry").classList.toggle("open");
+      });
+    });
+    $("entryList").querySelectorAll(".status-select").forEach(function(sel){
+      sel.addEventListener("click", function(e){ e.stopPropagation(); });
+      sel.addEventListener("change", function(e){
+        e.stopPropagation();
+        var id = this.dataset.id;
+        var val = this.value;
+        this.className = "status-select status-" + val;
+        if(dbNs){
+          dbNs.collection("submissions").doc(id).update({status:val, statusUpdatedAt:new Date().toISOString()}).catch(function(){});
+        }
+      });
+    });
+  }
+
+  function renderEntry(s){
+    var statusVal = s.status || "new";
+    var detail = [
+      ["Athlete email", s.athleteEmail], ["Athlete phone", s.athletePhone],
+      ["Position", s.position], ["Years playing", s.yearsPlaying],
+      ["Three words", s.threeWords],
+      ["Why seeking coaching now", s.whyNow], ["What's holding them back", s.whatsHoldingBack],
+      ["Mental challenge", s.mentalChallenge], ["Response to mistakes", s.mistakeResponse],
+      ["Hopes coaching helps with", s.goalsHope],
+      ["Best way to reach", s.contactPreference],
+      ["Availability", s.availability],
+      ["Emergency contact", [s.emergencyContactName, s.emergencyContactPhone].filter(Boolean).join(" — ")],
+      ["Health considerations", s.healthConsiderations],
+      ["How they heard about Katalyst", s.howHeard],
+      ["Additional notes", s.additionalNotes]
+    ];
+    var detailGridHtml = '<div class="detail-grid">' + detail.filter(function(d){return d[1];}).map(function(d,i){
+      return '<div class="detail-item"><div class="k">'+escHtml(d[0])+'</div><div class="v">'+escHtml(d[1])+'</div></div>';
+    }).join("") + '</div>';
+
+    var parentHtml = "";
+    if(s.hasParentSection && (s.parentName || s.parentEmail || s.parentWhyCoaching)){
+      var pfields = [
+        ["Parent/guardian", s.parentName], ["Relationship", s.parentRelationship],
+        ["Email", s.parentEmail], ["Phone", s.parentPhone],
+        ["Why seeking coaching", s.parentWhyCoaching], ["Challenges observed", s.parentChallenges],
+        ["Response to pressure/mistakes", s.parentPressureResponse], ["Success after 12 weeks", s.parentSuccessLook],
+        ["One year from now", s.parentOneYear], ["Hoping to start", s.parentStartTiming]
+      ];
+      parentHtml = '<div class="detail-section-label">Parent / Guardian Perspective</div><div class="detail-grid">' +
+        pfields.filter(function(f){return f[1];}).map(function(f){
+          return '<div class="detail-item"><div class="k">'+escHtml(f[0])+'</div><div class="v">'+escHtml(f[1])+'</div></div>';
+        }).join("") + '</div>';
+    }
+
+    var consentHtml = "";
+    if(s.consentDate || s.athleteSignature){
+      var cfields = [
+        ["Date", s.consentDate],
+        ["Athlete consent/assent", s.athleteConsentGiven ? "Yes" : (s.athleteConsentGiven===false ? "No" : "—")],
+        ["Athlete signature", s.athleteSignature]
+      ];
+      if(s.hasParentSection){
+        cfields.push(
+          ["Parent consent", s.parentConsentGiven ? "Yes" : (s.parentConsentGiven===false ? "No" : "—")],
+          ["Parent signature", s.parentSignature]
+        );
+      }
+      consentHtml = '<div class="detail-section-label">Confidentiality &amp; Consent</div><div class="detail-grid">' +
+        cfields.filter(function(f){return f[1];}).map(function(f){
+          return '<div class="detail-item"><div class="k">'+escHtml(f[0])+'</div><div class="v">'+escHtml(f[1])+'</div></div>';
+        }).join("") + '</div>';
+    }
+
+    if(!parentHtml && !consentHtml){
+      parentHtml = '<p class="no-parent-note">Logged manually — no form Q&amp;A on file.</p>';
+    }
+
+    return '' +
+      '<div class="entry" data-id="'+escHtml(s.id)+'">' +
+        '<div class="entry-head">' +
+          '<div class="entry-avatar">'+escHtml(initials(s.athleteName))+'</div>' +
+          '<div class="entry-main">' +
+            '<div class="entry-name">'+escHtml(s.athleteName||"Unnamed athlete")+'</div>' +
+            '<div class="entry-meta">'+escHtml(s.sport||"—")+' · '+escHtml(s.team||"—")+' · '+escHtml(fmtDate(s.submittedAt))+'</div>' +
+          '</div>' +
+          '<div class="entry-side">' +
+            '<span class="pill pill-age">Age '+escHtml(s.age!=null?s.age:"—")+'</span>' +
+            '<span class="pill pill-conf">Conf '+escHtml(s.confidenceScore!=null?s.confidenceScore:"—")+'/10</span>' +
+            '<select class="status-select status-'+statusVal+'" data-id="'+escHtml(s.id)+'">' +
+              ['new','contacted','scheduled','declined'].map(function(v){
+                return '<option value="'+v+'"'+(v===statusVal?' selected':'')+'>'+statusLabelHtml(v)+'</option>';
+              }).join('') +
+            '</select>' +
+            '<svg class="chev-btn" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</div>' +
+        '</div>' +
+        '<div class="entry-detail">' + detailGridHtml + parentHtml + consentHtml + '</div>' +
+      '</div>';
+  }
+  function statusLabelHtml(v){
+    return {new:"New", contacted:"Contacted", scheduled:"Scheduled", declined:"Declined"}[v];
+  }
+  function escHtml(s){
+    if(s==null) return "";
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  $("copyShareBtn") && $("copyShareBtn").addEventListener("click", function(){
+    var input = $("shareUrlInput");
+    var btn = this;
+    function done(){ var old=btn.textContent; btn.textContent="Copied"; setTimeout(function(){btn.textContent=old;},1500); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(input.value).then(done).catch(function(){ input.select(); done(); });
+    } else { input.select(); done(); }
+  });
+
+})();
+</script>
+
+</body></html>
