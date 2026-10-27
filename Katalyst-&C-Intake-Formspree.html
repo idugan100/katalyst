@@ -1,0 +1,1055 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Katalyst S&amp;C Intake</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Layout: sticky top bar (brand + tabs) over one scrolling column.
+     Form = numbered section cards; Athletes tab = stat row + filters + expandable list.
+     Single committed dark theme matching the Katalyst mark (black ground, blue gradient)
+     and the mental performance intake page. */
+  :root{
+    --bg:#08090c;
+    --surface:#14151c;
+    --surface-2:#1c1e28;
+    --surface-3:#23252f;
+    --border:#2a2c38;
+    --border-soft:#1e2029;
+    --fg:#f3f4f8;
+    --fg-muted:#9699ad;
+    --fg-faint:#5e6178;
+    --accent-1:#7cc6ff;
+    --accent-2:#2f7af0;
+    --accent-3:#1b3fa0;
+    --accent-ink:#07101f;
+    --accent-grad:linear-gradient(135deg,var(--accent-1),var(--accent-2) 55%,var(--accent-3));
+    --good:#36c98a; --good-bg:rgba(54,201,138,.14);
+    --warn:#f0b429; --warn-bg:rgba(240,180,41,.14);
+    --info:#7cc6ff; --info-bg:rgba(124,198,255,.12);
+    --bad:#f0574f; --bad-bg:rgba(240,87,79,.14);
+    --font-display:'Rajdhani',system-ui,-apple-system,sans-serif;
+    --font-body:'Inter',system-ui,-apple-system,sans-serif;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{background:var(--bg)}
+  body{
+    margin:0;font-family:var(--font-body);color:var(--fg);background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+    padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px));
+  }
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:50;background:var(--bg)}
+  a{color:var(--accent-1)}
+  h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+  p{margin:0}
+  button{font-family:inherit}
+  ::selection{background:var(--accent-3);color:#fff}
+  :focus-visible{outline:2px solid var(--accent-1);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+  .shell{max-width:880px;margin:0 auto}
+
+  /* top bar */
+  .topbar{
+    position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+    background:rgba(8,9,12,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+    margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+    margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));
+    padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px));
+  }
+  .topbar-inner{max-width:880px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand svg{flex:none;display:block}
+  .brand-text{display:flex;flex-direction:column;line-height:1.05;min-width:0}
+  .brand-name{font-family:var(--font-display);font-weight:700;font-size:1.15rem;letter-spacing:.06em;white-space:nowrap}
+  .brand-sub{font-family:var(--font-display);font-weight:600;font-size:.58rem;letter-spacing:.32em;color:var(--fg-muted);white-space:nowrap}
+  .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px}
+  .tab-btn{appearance:none;border:0;background:transparent;color:var(--fg-muted);font-family:var(--font-display);font-weight:600;letter-spacing:.03em;font-size:.82rem;padding:7px 14px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s}
+  .tab-btn:hover{color:var(--fg)}
+  .tab-btn.active{background:var(--accent-grad);color:var(--accent-ink)}
+
+  .panel{padding-block:28px 64px}
+
+  /* intro */
+  .intro{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:28px}
+  .intro h1{font-size:1.5rem;font-weight:700;letter-spacing:.01em;margin-bottom:8px}
+  .intro-lead{font-weight:600;font-size:1.05rem;color:var(--accent-1);margin-bottom:14px}
+  .intro p{color:var(--fg-muted);font-size:.92rem;line-height:1.6;max-width:68ch}
+  .intro p + p{margin-top:10px}
+  .offer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:16px}
+  .offer-card{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:10px;padding:11px 12px}
+  .offer-card .eyebrow{font-family:var(--font-display);font-weight:600;font-size:.72rem;letter-spacing:.08em;color:var(--accent-1);text-transform:uppercase}
+  .offer-card p{color:var(--fg-muted);font-size:.8rem;margin-top:4px;line-height:1.45}
+  .time-note{display:inline-flex;gap:8px;align-items:center;margin-top:16px;font-size:.78rem;color:var(--fg-muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:999px;padding:5px 12px}
+
+  /* sections */
+  form{display:flex;flex-direction:column;gap:18px}
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;min-width:0}
+  .section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+  .section-num{font-family:var(--font-display);font-weight:700;font-size:.78rem;color:var(--accent-1);border:1px solid var(--border);border-radius:999px;padding:2px 10px;letter-spacing:.04em;flex:none;font-variant-numeric:tabular-nums}
+  .section-title{font-family:var(--font-display);font-size:1.18rem;font-weight:700;letter-spacing:.02em}
+  .section-desc{color:var(--fg-muted);font-size:.84rem;margin:6px 0 18px;line-height:1.5}
+  .sub-head{font-family:var(--font-display);font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-1);margin:22px 0 2px;padding-top:18px;border-top:1px solid var(--border-soft)}
+
+  .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  @media (max-width:560px){.row2,.row3{grid-template-columns:1fr}}
+
+  label,.q{font-size:.84rem;font-weight:600;color:var(--fg);line-height:1.45}
+  .req{color:var(--accent-1);margin-left:3px}
+  .opt{color:var(--fg-faint);font-weight:500;margin-left:6px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+  .hint{color:var(--fg-faint);font-size:.76rem;line-height:1.45}
+
+  input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date],textarea,select{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;
+    color:var(--fg);font-family:var(--font-body);font-size:.92rem;padding:10px 12px;
+    transition:border-color .15s,background .15s;
+  }
+  input::placeholder,textarea::placeholder{color:var(--fg-faint)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent-2);background:var(--surface-3)}
+  textarea{resize:vertical;min-height:72px;line-height:1.5}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--fg-muted) 50%),linear-gradient(135deg,var(--fg-muted) 50%,transparent 50%);background-position:calc(100% - 18px) center,calc(100% - 13px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:32px}
+  .invalid input,.invalid textarea,.invalid select,input.invalid,textarea.invalid,select.invalid{border-color:var(--bad)!important}
+  .invalid .opts{outline:1px solid var(--bad);outline-offset:4px;border-radius:10px}
+
+  /* pill options (single + multi choice) */
+  .opts{display:flex;flex-wrap:wrap;gap:6px}
+  .opt-pill{position:relative;display:inline-flex}
+  .opt-pill input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+  .opt-pill span{display:inline-block;border:1px solid var(--border);background:var(--surface-2);color:var(--fg-muted);border-radius:999px;padding:7px 13px;font-size:.8rem;font-weight:600;line-height:1.3;transition:all .15s;cursor:pointer}
+  .opt-pill:hover span{border-color:var(--accent-2);color:var(--fg)}
+  .opt-pill input:checked + span{background:var(--accent-grad);color:var(--accent-ink);border-color:transparent}
+  .opt-pill input:focus-visible + span{outline:2px solid var(--accent-1);outline-offset:2px}
+
+  /* yes/no screening rows + comfort grid */
+  .qrows{display:flex;flex-direction:column}
+  .qrow{display:grid;grid-template-columns:1fr auto;gap:10px 18px;align-items:center;padding:12px 0;border-top:1px solid var(--border-soft)}
+  .qrow:first-child{border-top:0;padding-top:4px}
+  .qrow .q{font-weight:500}
+  .qrow .q b{color:var(--fg-faint);font-family:var(--font-display);font-weight:700;margin-right:8px;font-variant-numeric:tabular-nums}
+  @media (max-width:560px){.qrow{grid-template-columns:1fr}}
+
+  /* sliders */
+  .scale-anchors{display:flex;justify-content:space-between;gap:16px;font-size:.78rem;color:var(--fg-muted);line-height:1.45}
+  .scale-anchors span:last-child{text-align:right}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:var(--accent-grad);margin:14px 0 6px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--accent-2);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--accent-2);cursor:pointer}
+  .scale-readout{display:flex;justify-content:center;align-items:baseline;gap:6px}
+  .scale-readout .num{font-family:var(--font-display);font-weight:700;font-size:1.6rem;color:var(--accent-1);font-variant-numeric:tabular-nums}
+  .scale-readout .of{color:var(--fg-faint);font-size:.8rem}
+
+  /* callouts */
+  .callout{border-radius:12px;padding:12px 14px;font-size:.82rem;line-height:1.55;border:1px solid}
+  .callout.info{background:var(--info-bg);border-color:rgba(124,198,255,.25);color:var(--fg)}
+  .callout.warn{background:var(--warn-bg);border-color:rgba(240,180,41,.3);color:var(--fg)}
+  .callout strong{color:var(--fg)}
+
+  /* consent clauses */
+  .agreement{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:12px;padding:6px 18px}
+  .agreement-part{padding:14px 0;border-top:1px solid var(--border-soft)}
+  .agreement-part:first-child{border-top:0}
+  .agreement-part h4{margin:0 0 6px;font-family:var(--font-display);font-size:.98rem;font-weight:700;letter-spacing:.02em}
+  .agreement-part h4 b{color:var(--accent-1);margin-right:6px;font-variant-numeric:tabular-nums}
+  .agreement-part p{color:var(--fg-muted);font-size:.83rem;line-height:1.65;max-width:75ch}
+  .agreement-part p strong{color:var(--fg)}
+  .agree-main{background:var(--surface-2);border:1px solid var(--accent-3);border-radius:12px;padding:14px 16px;margin-top:0;font-size:.86rem;line-height:1.5}
+  .agree-main.invalid{border-color:var(--bad)}
+  .clauses{display:flex;flex-direction:column;gap:10px}
+  .clause{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:12px;padding:14px 16px}
+  .clause h4{margin:0 0 6px;font-family:var(--font-display);font-size:.98rem;font-weight:700;letter-spacing:.02em}
+  .clause h4 b{color:var(--accent-1);margin-right:6px;font-variant-numeric:tabular-nums}
+  .clause p{color:var(--fg-muted);font-size:.83rem;line-height:1.6}
+  .clause p strong{color:var(--fg)}
+  .agree{display:flex;align-items:flex-start;gap:10px;margin-top:10px;font-size:.82rem;font-weight:600;color:var(--fg);cursor:pointer}
+  .agree input{margin-top:2px;width:16px;height:16px;flex:none;accent-color:var(--accent-2)}
+  .clause.invalid{border-color:var(--bad)}
+  .who-signs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:560px){.who-signs{grid-template-columns:1fr}}
+  .who-card{display:flex;flex-direction:column;gap:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;opacity:.55;transition:opacity .15s,border-color .15s}
+  .who-card strong{font-family:var(--font-display);font-size:1rem;letter-spacing:.02em}
+  .who-card span:last-child{color:var(--fg-muted);font-size:.78rem;line-height:1.45}
+  .who-tag{align-self:flex-start;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);border:1px solid var(--border);border-radius:999px;padding:2px 8px}
+  .who-card.on{opacity:1;border-color:var(--accent-2);box-shadow:0 0 0 1px var(--accent-2) inset}
+  .who-card.on .who-tag{background:var(--accent-grad);color:var(--accent-ink);border-color:transparent}
+  .sig-block{display:flex;flex-direction:column;gap:16px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border-soft)}
+
+  .submit-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+  .btn{appearance:none;border:0;border-radius:10px;cursor:pointer;font-family:var(--font-display);font-weight:700;letter-spacing:.03em;font-size:.92rem;padding:13px 26px;background:var(--accent-grad);color:var(--accent-ink);transition:filter .15s,transform .05s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.6;cursor:wait}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--fg)}
+  .btn-ghost:hover{border-color:var(--accent-2);filter:none}
+  .submit-note{color:var(--fg-faint);font-size:.78rem;line-height:1.5}
+  .err{color:var(--bad);font-size:.82rem}
+
+  /* states */
+  .state-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;text-align:center}
+  .state-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:var(--good-bg);color:var(--good)}
+  .state-card h2{font-size:1.3rem;margin-bottom:8px}
+  .state-card p{color:var(--fg-muted);font-size:.9rem;line-height:1.6;max-width:48ch;margin:0 auto}
+  .state-card .btn-ghost{margin-top:20px}
+  .fallback-box{background:var(--surface-2);border:1px dashed var(--border);border-radius:12px;padding:16px;margin-top:18px;text-align:left}
+  .fallback-box p{color:var(--fg-muted);font-size:.82rem;line-height:1.55;margin:0 0 10px;max-width:none}
+  .fallback-box textarea{min-height:180px;font-size:.76rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg-muted)}
+  .fallback-actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .email-chip{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .email-chip code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent-1);font-size:.82rem;user-select:all;word-break:break-all}
+  .link-btn{color:var(--accent-1);font-weight:600;cursor:pointer;background:none;border:none;font-size:.8rem;padding:0;text-decoration:underline;text-underline-offset:3px}
+
+  /* athletes dashboard */
+  .add-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .add-bar-note{color:var(--fg-faint);font-size:.8rem}
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:22px}
+  .stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .stat-tile .n{font-family:var(--font-display);font-weight:700;font-size:1.7rem;font-variant-numeric:tabular-nums}
+  .stat-tile .l{color:var(--fg-muted);font-size:.74rem;letter-spacing:.03em;text-transform:uppercase;margin-top:2px}
+  .stat-tile.flag .n{color:var(--warn)}
+  .filter-bar{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px}
+  .filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .filter-row input[type=text]{flex:1;min-width:160px}
+  .filter-row select{width:auto;min-width:150px}
+  .chip-group{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{appearance:none;border:1px solid var(--border);background:var(--surface-2);color:var(--fg-muted);border-radius:999px;padding:6px 13px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s}
+  .chip:hover{border-color:var(--accent-2);color:var(--fg)}
+  .chip.active{background:var(--accent-grad);color:var(--accent-ink);border-color:transparent}
+  .filter-label{font-size:.72rem;color:var(--fg-faint);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .entry{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .entry-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;flex-wrap:wrap}
+  .entry-head:hover{background:var(--surface-2)}
+  .entry-avatar{flex:none;width:38px;height:38px;border-radius:50%;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--accent-ink);font-size:.95rem}
+  .entry-main{flex:1;min-width:140px}
+  .entry-name{font-weight:600;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .entry-meta{color:var(--fg-muted);font-size:.78rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .entry-side{flex:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.02em;white-space:nowrap}
+  .pill-age{background:var(--info-bg);color:var(--info)}
+  .pill-flag{background:var(--warn-bg);color:var(--warn)}
+  .pill-ok{background:var(--good-bg);color:var(--good)}
+  .status-select{appearance:none;border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:var(--font-body);width:auto;background-image:none}
+  .status-new{background-color:var(--warn-bg);color:var(--warn);border-color:transparent}
+  .status-contacted{background-color:var(--info-bg);color:var(--info);border-color:transparent}
+  .status-active{background-color:var(--good-bg);color:var(--good);border-color:transparent}
+  .status-inactive{background-color:var(--surface-3);color:var(--fg-muted);border-color:transparent}
+  .chev-btn{color:var(--fg-faint);transition:transform .2s;flex:none}
+  .entry.open .chev-btn{transform:rotate(180deg)}
+  .entry-detail{border-top:1px solid var(--border-soft);padding:18px 20px 20px;background:var(--surface-2)}
+  .flag-list{margin:0 0 6px;padding:12px 14px 12px 32px;background:var(--warn-bg);border:1px solid rgba(240,180,41,.3);border-radius:10px;font-size:.82rem;line-height:1.6}
+  .detail-section-label{font-family:var(--font-display);font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-1);margin:18px 0 10px;border-top:1px solid var(--border-soft);padding-top:16px}
+  .detail-section-label:first-child{margin-top:0;border-top:0;padding-top:0}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 24px}
+  @media (max-width:640px){.detail-grid{grid-template-columns:1fr}}
+  .detail-item{min-width:0}
+  .detail-item .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);margin-bottom:3px}
+  .detail-item .v{font-size:.86rem;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+  .detail-item .v.yes{color:var(--warn);font-weight:700}
+  .empty-state{background:var(--surface);border:1px dashed var(--border);border-radius:16px;padding:40px 24px;text-align:center}
+  .empty-state h3{font-size:1.05rem;margin-bottom:8px}
+  .empty-state p{color:var(--fg-muted);font-size:.86rem;max-width:44ch;margin:0 auto;line-height:1.6}
+
+  @media (max-width:480px){.intro,.section{padding:18px}.brand-name{font-size:1rem}}
+</style>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Katalyst mark">
+          <defs>
+            <linearGradient id="kgrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#9cd4ff"/><stop offset=".55" stop-color="#2f7af0"/><stop offset="1" stop-color="#132a73"/>
+            </linearGradient>
+          </defs>
+          <path d="M6 4 H14 V21 L30 4 H41 L22 24 L41 44 H30 L14 27 V44 H6 Z" fill="url(#kgrad)"/>
+        </svg>
+        <div class="brand-text"><span class="brand-name">KATALYST</span><span class="brand-sub">PERFORMANCE</span></div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" id="tabBtnForm" role="tab" aria-selected="true" type="button">Intake Form</button>
+        <button class="tab-btn" id="tabBtnDash" role="tab" aria-selected="false" type="button" hidden>Athletes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FORM ============ -->
+  <section class="panel" id="panelForm">
+    <div class="intro">
+      <h1>Welcome to Katalyst Performance.</h1>
+      <p class="intro-lead">Katalyst is the spark that ignites growth.</p>
+      <p>Strength and conditioning at Katalyst is built around you: your sport, your body, your history, and where you want to go. Before we start training, I want to understand where you are right now so every session is safe, purposeful, and moving you toward your goals.</p>
+      <p>This intake covers your goals, training background, health and injury history, and recovery. Be honest and take your time. A "yes" on a health question doesn't mean you can't train; it helps me plan the right way to start.</p>
+      <div class="offer-grid">
+        <div class="offer-card"><div class="eyebrow">Strength &amp; Power</div><p>Individualized lifting built for your sport and level.</p></div>
+        <div class="offer-card"><div class="eyebrow">Speed &amp; Conditioning</div><p>Sprint, agility, and engine work, including event prep like HYROX.</p></div>
+        <div class="offer-card"><div class="eyebrow">Injury Resilience</div><p>Mobility and durability work to keep you training and competing.</p></div>
+      </div>
+      <span class="time-note">Takes about 10–15 minutes</span>
+    </div>
+
+    <form id="intakeForm" novalidate>
+      <!-- Athlete basics -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Athlete Basics</span></div>
+        <p class="section-desc">Who I'm training, and how to reach them.</p>
+        <div class="stack">
+          <div class="row2">
+            <div class="field"><label for="athleteName">Athlete full name<span class="req">*</span></label><input type="text" id="athleteName" required autocomplete="name"></div>
+            <div class="field"><label for="age">Age<span class="req">*</span></label><input type="number" id="age" min="5" max="99" required inputmode="numeric"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="dob">Date of birth<span class="req">*</span></label><input type="date" id="dob" required></div>
+            <div class="field"><label for="gender">Gender<span class="opt">optional</span></label>
+              <select id="gender"><option value="">Select one</option><option>Female</option><option>Male</option><option>Prefer not to say</option><option>Other</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="athleteEmail">Email<span class="req">*</span></label><input type="email" id="athleteEmail" required autocomplete="email" placeholder="you@email.com"></div>
+            <div class="field"><label for="athletePhone">Phone<span class="req">*</span></label><input type="tel" id="athletePhone" required autocomplete="tel"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="sport">Primary sport(s)<span class="req">*</span></label><input type="text" id="sport" required placeholder="e.g. softball, HYROX, soccer, general fitness"></div>
+            <div class="field"><label for="position">Position / event<span class="opt">optional</span></label><input type="text" id="position"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="team">School / team / club<span class="opt">optional</span></label><input type="text" id="team"></div>
+            <div class="field"><label for="level">Current level<span class="req">*</span></label>
+              <select id="level" required><option value="">Select one</option><option>Youth (under 14)</option><option>High school</option><option>College</option><option>Professional</option><option>Adult / recreational</option><option>Masters / competitive adult</option></select></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label for="season">Season status<span class="req">*</span></label>
+              <select id="season" required><option value="">Select one</option><option>In-season</option><option>Off-season</option><option>Pre-season</option><option>Not competing</option></select></div>
+            <div class="field"><label for="height">Height<span class="opt">optional</span></label><input type="text" id="height" placeholder="5'6&quot;"></div>
+            <div class="field"><label for="weight">Weight (lbs)<span class="opt">optional</span></label><input type="text" id="weight" inputmode="numeric"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goals -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Goals</span></div>
+        <p class="section-desc">What you want out of training. This is what we build around.</p>
+        <div class="stack">
+          <div class="field" data-multi="goals" data-req>
+            <span class="q">What are your main training goals?<span class="req">*</span><span class="opt">select all that apply</span></span>
+            <div class="opts"></div>
+          </div>
+          <div class="field"><label for="topGoals">Your top 3 goals for the next 3–6 months<span class="req">*</span></label><textarea id="topGoals" required></textarea></div>
+          <div class="field"><label for="events">Upcoming competitions, tryouts, events, or races (with dates)<span class="opt">optional</span></label><textarea id="events" placeholder="e.g. Regional tournament – March 14; Spring 5K – April 26; College tryouts – June"></textarea></div>
+          <div class="field"><label for="coachNotes">Anything I should know about you as an athlete?<span class="opt">optional</span></label><textarea id="coachNotes" placeholder="How you like to be coached, what motivates you, what frustrates you"></textarea></div>
+        </div>
+      </div>
+
+      <!-- Training history -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Training History</span></div>
+        <p class="section-desc">Where you're starting from, and when you can train.</p>
+        <div class="stack">
+          <div class="field" data-single="experience" data-req>
+            <span class="q">Strength training experience<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="field" data-single="daysPerWeek" data-req>
+            <span class="q">Days per week you currently train (lifting or conditioning)<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="field">
+            <span class="q">How comfortable are you with these?<span class="opt">optional</span></span>
+            <div class="qrows" id="comfortRows"></div>
+          </div>
+          <div class="field"><label for="currentProgram">Current training program<span class="opt">optional</span></label><textarea id="currentProgram" placeholder="Team lifts, practices, running, classes. Include days per week."></textarea></div>
+          <div class="field" data-single="sessionsWanted" data-req>
+            <span class="q">Sessions per week you're hoping for<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="field" data-multi="days" data-req>
+            <span class="q">Days that work best<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="field" data-multi="times" data-req>
+            <span class="q">Times that work best<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="field" data-single="setup" data-req>
+            <span class="q">Training setup<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="field"><label for="equipment">Equipment you can access when training on your own<span class="opt">optional</span></label><input type="text" id="equipment" placeholder="Full gym, home gym, dumbbells only, sled, rower…"></div>
+        </div>
+      </div>
+
+      <!-- Health screening -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Health Screening</span></div>
+        <p class="section-desc">Please answer honestly. A "Yes" doesn't mean you can't train. It means we may need clearance from a physician first so we can keep you safe.</p>
+        <div class="qrows" id="screenRows"></div>
+        <div class="field" id="screenExplainWrap" hidden style="margin-top:14px">
+          <label for="screenExplain">You answered yes above. Please explain<span class="req">*</span></label>
+          <textarea id="screenExplain" required></textarea>
+        </div>
+      </div>
+
+      <!-- Medical history -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Medical History</span></div>
+        <p class="section-desc">Conditions, medications, and anything I'd need to know in an emergency.</p>
+        <div class="stack">
+          <div class="field" data-multi="conditions" data-req>
+            <span class="q">Do you have, or have you had, any of the following?<span class="req">*</span><span class="opt">select all that apply</span></span><div class="opts"></div>
+          </div>
+          <div class="field"><label for="conditionsOther">Other conditions<span class="opt">optional</span></label><input type="text" id="conditionsOther"></div>
+          <div class="row2">
+            <div class="field"><label for="medications">Current medications &amp; supplements<span class="req">*</span></label><textarea id="medications" required placeholder="Write &quot;none&quot; if none"></textarea></div>
+            <div class="field"><label for="allergies">Allergies<span class="req">*</span></label><textarea id="allergies" required placeholder="Food, medication, insect, environmental, or &quot;none&quot;"></textarea></div>
+          </div>
+          <div class="field" data-multi="carry" data-req>
+            <span class="q">Do you carry any of the following?<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label for="pregnant">Pregnant or &lt;12 months postpartum?<span class="req">*</span></label>
+              <select id="pregnant" required><option value="">Select one</option><option>No</option><option>Yes</option><option>Not applicable</option></select></div>
+            <div class="field"><label for="lastPhysical">Date of last physical<span class="opt">optional</span></label><input type="date" id="lastPhysical"></div>
+            <div class="field"><label for="cleared">Cleared by a physician for full activity?<span class="req">*</span></label>
+              <select id="cleared" required><option value="">Select one</option><option>Yes</option><option>No</option><option>Not sure</option></select></div>
+          </div>
+          <div class="field"><label for="medicalOther">Any other medical information I should know?<span class="opt">optional</span></label><textarea id="medicalOther"></textarea></div>
+        </div>
+      </div>
+
+      <!-- Injury history -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Injury History</span></div>
+        <p class="section-desc">Current pain, past injuries, and anything you've been told to avoid.</p>
+        <div class="stack">
+          <div class="field" data-single="currentPain" data-req>
+            <span class="q">Are you currently dealing with any pain or injury?<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="stack" id="painBlock" hidden>
+            <div class="field" data-multi="painAreas" data-req>
+              <span class="q">Where?<span class="req">*</span><span class="opt">select all that apply</span></span><div class="opts"></div>
+            </div>
+            <div class="field">
+              <span class="q">Current pain level</span>
+              <input type="range" id="painLevel" min="0" max="10" value="3" aria-label="Current pain level from 0 to 10">
+              <div class="scale-anchors"><span>0 · No pain</span><span>10 · Worst pain</span></div>
+              <div class="scale-readout"><span class="num" id="painNum">3</span><span class="of">/ 10</span></div>
+            </div>
+            <div class="field"><label for="painDescribe">Describe it<span class="req">*</span></label><textarea id="painDescribe" required placeholder="What happened, when, what makes it better or worse, and any diagnosis"></textarea></div>
+            <div class="field" data-single="seeingProvider">
+              <span class="q">Are you seeing a doctor, PT, chiropractor, or athletic trainer for it?</span><div class="opts"></div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="pastInjuries">Past injuries<span class="opt">optional</span></label><textarea id="pastInjuries" placeholder="Sprains, strains, fractures, tears… include the year and time missed"></textarea></div>
+            <div class="field"><label for="surgeries">Past surgeries<span class="opt">optional</span></label><textarea id="surgeries" placeholder="What, when, and whether you finished rehab"></textarea></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="concussions">Number of concussions<span class="req">*</span></label>
+              <select id="concussions" required><option value="">Select one</option><option>0</option><option>1</option><option>2</option><option>3 or more</option></select></div>
+            <div class="field"><label for="lastConcussion">Most recent concussion<span class="opt">if any</span></label><input type="date" id="lastConcussion"></div>
+          </div>
+          <div class="field"><label for="avoid">Movements that cause pain, or that you've been told to avoid<span class="opt">optional</span></label><textarea id="avoid"></textarea></div>
+        </div>
+      </div>
+
+      <!-- Lifestyle -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Lifestyle &amp; Recovery</span></div>
+        <p class="section-desc">Training is only part of the picture. Recovery matters just as much.</p>
+        <div class="stack">
+          <div class="field" data-single="sleepHours" data-req>
+            <span class="q">Average sleep per night<span class="req">*</span></span><div class="opts"></div>
+          </div>
+          <div class="field" data-single="sleepQuality" data-req>
+            <span class="q">Sleep quality<span class="req">*</span><span class="opt">1 very poor · 5 excellent</span></span><div class="opts"></div>
+          </div>
+          <div class="field" data-single="stress" data-req>
+            <span class="q">Current stress level<span class="req">*</span><span class="opt">1 very low · 5 very high</span></span><div class="opts"></div>
+          </div>
+          <div class="field" data-single="energy" data-req>
+            <span class="q">Day-to-day energy<span class="req">*</span><span class="opt">1 very low · 5 very high</span></span><div class="opts"></div>
+          </div>
+          <div class="field"><label for="schedule">Typical weekly schedule<span class="opt">optional</span></label><textarea id="schedule" placeholder="School / work / practices / games / other activities"></textarea></div>
+          <div class="field" data-single="mpInterest">
+            <span class="q">Interested in mental performance coaching too?<span class="opt">optional</span></span>
+            <span class="hint">Katalyst also offers 1:1 mental performance coaching for confidence, focus, and handling pressure.</span>
+            <div class="opts"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contacts -->
+      <div class="section" data-sec>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Emergency Contact &amp; Logistics</span></div>
+        <p class="section-desc">Someone other than the athlete who can be reached during sessions.</p>
+        <div class="stack">
+          <div class="row3">
+            <div class="field"><label for="emName">Emergency contact name<span class="req">*</span></label><input type="text" id="emName" required></div>
+            <div class="field"><label for="emRelationship">Relationship<span class="req">*</span></label><input type="text" id="emRelationship" required></div>
+            <div class="field"><label for="emPhone">Phone<span class="req">*</span></label><input type="tel" id="emPhone" required></div>
+          </div>
+          <div class="field"><label for="physician">Physician / pediatrician name &amp; phone<span class="opt">optional</span></label><input type="text" id="physician"></div>
+          <div class="row2">
+            <div class="field"><label for="contactPreference">Best way to reach you<span class="req">*</span></label>
+              <select id="contactPreference" required><option value="">Select one</option><option>Text</option><option>Phone call</option><option>Email</option></select></div>
+            <div class="field"><label for="howHeard">How did you hear about Katalyst?<span class="opt">optional</span></label><input type="text" id="howHeard"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent (minors) -->
+      <div class="section" data-sec id="parentSection" hidden>
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Parent / Guardian</span></div>
+        <p class="section-desc">Shown because the athlete is under 18. Required for minors.</p>
+        <div class="stack">
+          <div class="row2">
+            <div class="field"><label for="parentName">Parent / guardian full name<span class="req">*</span></label><input type="text" id="parentName" required></div>
+            <div class="field"><label for="parentRelationship">Relationship to athlete<span class="req">*</span></label><input type="text" id="parentRelationship" required placeholder="e.g. mother, father, legal guardian"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="parentEmail">Email<span class="req">*</span></label><input type="email" id="parentEmail" required></div>
+            <div class="field"><label for="parentPhone">Phone<span class="req">*</span></label><input type="tel" id="parentPhone" required></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Consent -->
+      <div class="section" data-sec id="consentSection">
+        <div class="section-head"><span class="section-num"></span><span class="section-title">Consent, Waiver &amp; Release</span></div>
+        <p class="section-desc">Please read each section carefully. This is a legal agreement that affects your rights.</p>
+        <div class="who-signs" role="group" aria-label="Who is signing this consent">
+          <div class="who-card" id="whoAdult"><span class="who-tag">18 or older</span><strong>Adult athlete</strong><span>The athlete reads and signs for themselves.</span></div>
+          <div class="who-card" id="whoMinor"><span class="who-tag">Under 18</span><strong>Parent / guardian</strong><span>A parent or legal guardian reads and signs. The athlete also signs to show they agree to take part.</span></div>
+        </div>
+        <div class="callout info" id="ageNeeded" style="margin:14px 0">Enter the athlete's age in <strong>Athlete Basics</strong> to load the right consent.</div>
+        <div id="consentBody" hidden>
+          <div class="callout info" id="modeAdultNote" style="margin:14px 0">You're signing for yourself. In the sections below, "I" and "me" mean you, the athlete.</div>
+          <div class="callout warn" id="modeMinorNote" hidden style="margin:14px 0"><strong>Parent / guardian:</strong> you're signing on your own behalf and on behalf of your child. In the sections below, "I" and "me" mean you and your child, and "my participation" means your child's training. A separate parent/guardian waiver must also be signed before your child's first session.</div>
+          <div class="clauses" id="clauses"></div>
+
+        <div class="sub-head">Photo / Video Release</div>
+        <div class="field" data-single="photoRelease" data-req style="margin-top:10px">
+          <span class="q">Choose one<span class="req">*</span></span><div class="opts"></div>
+        </div>
+
+        <div class="sig-block" id="sigAdult">
+          <label class="agree agree-main"><input type="checkbox" id="adultAgree" required>I am 18 or older, and I have read, understand, and agree to every section of this Consent, Waiver &amp; Release. I voluntarily choose to train with Katalyst Performance.<span class="req">*</span></label>
+          <div class="field"><label for="adultSignature">Signature: type your full legal name<span class="req">*</span></label><input type="text" id="adultSignature" required></div>
+        </div>
+
+        <div class="sig-block" id="sigMinor" hidden>
+          <label class="agree agree-main"><input type="checkbox" id="parentAgree" required>I am the parent or legal guardian of this athlete, and I have read, understand, and agree to every section of this Consent, Waiver &amp; Release on my own behalf and on my child's behalf. I give permission for my child to train with Katalyst Performance.<span class="req">*</span></label>
+          <div class="field"><label for="parentSignature">Parent / guardian signature: type your full legal name<span class="req">*</span></label><input type="text" id="parentSignature" required></div>
+          <div class="field"><label for="athleteSignatureMinor">Athlete signature: type your full name<span class="req">*</span></label><input type="text" id="athleteSignatureMinor" required><span class="hint">By typing their name, the athlete confirms they understand what this training involves and agree to take part and follow their coach's instructions.</span></div>
+        </div>
+
+        <div class="field" style="margin-top:16px"><label for="consentDate">Date</label><input type="text" id="consentDate" readonly></div>
+        </div>
+      </div>
+
+      <p class="err" id="formErr" hidden>Some required answers are missing. They're outlined in red above.</p>
+      <div class="submit-row">
+        <button type="submit" class="btn" id="submitBtn">Submit Intake</button>
+        <span class="submit-note">Sent directly to Katalyst Performance. Not visible to other athletes or families.</span>
+      </div>
+    </form>
+
+    <div class="state-card" id="thankYouCard" hidden>
+      <div class="state-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2>Got it. Thank you.</h2>
+      <p>Your intake has been sent to Katalyst Performance. I'll review everything before our first session. If anything about your health or injuries changes, let me know right away.</p>
+      <button class="btn btn-ghost" id="submitAnotherBtn" type="button">Submit another</button>
+    </div>
+
+    <div class="state-card" id="fallbackCard" hidden>
+      <div class="state-icon" style="background:var(--warn-bg);color:var(--warn)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 3.9L2.8 17a1.5 1.5 0 001.3 2.3h15.8a1.5 1.5 0 001.3-2.3L13.7 3.9a1.5 1.5 0 00-2.6 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2>Couldn't save that automatically</h2>
+      <p>That can happen if you're offline or experiencing network issues. Copy your responses below and email them over, and I'll take it from there.</p>
+      <div class="fallback-box">
+        <p class="email-chip">Send to <code id="fallbackEmail">kaleighedwards222@gmail.com</code><button class="link-btn" id="copyEmailBtn" type="button">Copy address</button></p>
+        <textarea id="fallbackText" readonly aria-label="Your intake responses"></textarea>
+        <div class="fallback-actions">
+          <button class="btn btn-ghost" id="copySummaryBtn" type="button">Copy responses</button>
+          <button class="btn btn-ghost" id="backToFormBtn" type="button">Back to form</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ATHLETES (owner only) ============ -->
+  <section class="panel" id="panelDash" hidden>
+    <div class="stat-row" id="statRow"></div>
+    <div class="add-bar">
+      <button class="btn btn-ghost" id="addInquiryBtn" type="button">+ Log an athlete</button>
+      <span class="add-bar-note">For athletes who reached out by call, text, DM, or email.</span>
+    </div>
+    <div class="section" id="addInquiryForm" hidden style="margin-bottom:18px">
+      <div class="section-head"><span class="section-title">Log a new athlete</span></div>
+      <p class="section-desc">Only name and age are required. They still need to complete the full intake before training.</p>
+      <div class="stack">
+        <div class="row2">
+          <div class="field"><label for="qaName">Athlete name<span class="req">*</span></label><input type="text" id="qaName"></div>
+          <div class="field"><label for="qaAge">Age<span class="req">*</span></label><input type="number" id="qaAge" min="5" max="99" inputmode="numeric"></div>
+        </div>
+        <div class="row3">
+          <div class="field"><label for="qaSport">Sport</label><input type="text" id="qaSport"></div>
+          <div class="field"><label for="qaContact">Contact (phone or email)</label><input type="text" id="qaContact"></div>
+          <div class="field"><label for="qaSource">How it came in</label><select id="qaSource"><option>Phone call</option><option>Text / DM</option><option>Email</option><option>Referral</option><option>In person</option><option>Other</option></select></div>
+        </div>
+        <div class="field"><label for="qaNotes">Notes</label><textarea id="qaNotes"></textarea></div>
+        <p class="err" id="qaErr" hidden>Athlete name and a valid age are required.</p>
+        <div class="submit-row"><button class="btn" id="qaSaveBtn" type="button">Save athlete</button><button class="btn btn-ghost" id="qaCancelBtn" type="button">Cancel</button></div>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="Search by name, sport, or team…" aria-label="Search athletes">
+        <select id="sortSelect" aria-label="Sort"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="age-asc">Age: low to high</option><option value="age-desc">Age: high to low</option></select>
+      </div>
+      <div class="filter-row"><span class="filter-label">Age</span>
+        <div class="chip-group" id="ageChips">
+          <button class="chip active" data-min="0" data-max="999" type="button">All</button>
+          <button class="chip" data-min="0" data-max="13" type="button">≤13</button>
+          <button class="chip" data-min="14" data-max="17" type="button">14–17</button>
+          <button class="chip" data-min="18" data-max="22" type="button">18–22</button>
+          <button class="chip" data-min="23" data-max="999" type="button">23+</button>
+        </div>
+      </div>
+      <div class="filter-row"><span class="filter-label">Status</span>
+        <div class="chip-group" id="statusChips">
+          <button class="chip active" data-status="all" type="button">All</button>
+          <button class="chip" data-status="flag" type="button">Needs clearance</button>
+          <button class="chip" data-status="new" type="button">New</button>
+          <button class="chip" data-status="contacted" type="button">Contacted</button>
+          <button class="chip" data-status="active" type="button">Active</button>
+          <button class="chip" data-status="inactive" type="button">Inactive</button>
+        </div>
+      </div>
+    </div>
+    <div class="list" id="entryList"></div>
+    <div class="empty-state" id="emptyState">
+      <h3>No athletes yet</h3>
+      <p>When an athlete submits the intake, they'll show up here with any health flags marked, ready to review before their first session.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function escHtml(s){ if(s==null) return ""; return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+
+  /* ---------- option lists ---------- */
+  var OPTIONS = {
+    goals:["Get stronger","Get faster / quicker","More power / explosiveness","Better conditioning","Injury prevention","Return from an injury","Mobility / movement quality","Body composition","Prepare for an event or season","General health & fitness","Confidence in the weight room"],
+    experience:["Brand new to lifting","Less than 1 year","1–3 years consistent","3+ years structured"],
+    daysPerWeek:["0","1–2","3–4","5+"],
+    sessionsWanted:["1","2","3","4+","Not sure yet"],
+    days:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+    times:["Before 8am","8–11am","11am–2pm","2–5pm","After 5pm"],
+    setup:["In person","Remote programming","Both"],
+    conditions:["None of these","Asthma / exercise-induced asthma","Diabetes","Heart condition or murmur","High blood pressure","Seizures / epilepsy","Sickle cell trait or disease","Anemia","Thyroid condition","Hernia","Arthritis","Low bone density / stress fractures","Kidney condition","Eating disorder (current or past)","Heat illness"],
+    carry:["None","Inhaler","EpiPen","Glucose / insulin"],
+    currentPain:["No","Yes"],
+    painAreas:["Head / neck","Shoulder","Elbow","Wrist / hand","Upper back","Lower back","Hip / groin","Hamstring","Quad / thigh","Knee","Shin / calf","Ankle / foot"],
+    seeingProvider:["No","Yes"],
+    sleepHours:["< 6","6–7","7–8","8–9","9+"],
+    sleepQuality:["1","2","3","4","5"],
+    stress:["1","2","3","4","5"],
+    energy:["1","2","3","4","5"],
+    mpInterest:["Yes","Maybe","No"],
+    photoRelease:["Yes, coaching and social media / marketing","Coaching only, never posted publicly","No photos or videos"]
+  };
+  var COMFORT = ["Squat variations","Deadlift / hinge","Bench press / push-ups","Pull-ups / rows","Olympic lifts (cleans, snatches)","Jumping / plyometrics","Sprinting / speed work","Conditioning (bike, row, ski, run)"];
+  var COMFORT_OPTS = ["Never","Some","Comfortable"];
+  var SCREEN = [
+    "Has a doctor ever told you that you have a heart condition or high blood pressure?",
+    "Do you ever feel pain or pressure in your chest at rest, during daily activities, or during exercise?",
+    "Have you ever fainted, passed out, or nearly passed out during or right after exercise?",
+    "Do you lose balance from dizziness, or have you lost consciousness in the last 12 months?",
+    "Do you get more short of breath or tired during exercise than others your age or level?",
+    "Has any family member died suddenly or from a heart problem before age 50?",
+    "Have you been diagnosed with any other ongoing medical condition?",
+    "Do you take prescription medication for an ongoing medical condition?",
+    "Has a doctor ever told you to only do medically supervised physical activity?",
+    "Do you currently have a bone, joint, or muscle problem that could get worse with exercise?"
+  ];
+  var CLAUSES = [
+    ["Informed Consent & Assumption of Risk","I voluntarily choose to take part in strength and conditioning training with Katalyst Performance, including weight training, conditioning, running, sprinting, jumping, agility, mobility, testing, and the use of training equipment, in person, remotely, or on my own. I understand that physical training involves risk of injury, including muscle strains, sprains, fractures, joint injuries, heat illness, cardiac events, exposure to illness, and in rare cases serious injury, permanent disability, or death. I understand these risks and voluntarily accept them."],
+    ["Health Information & Medical Clearance","I confirm that the health and injury information I provided is complete and accurate to the best of my knowledge. I will tell my coach right away about any change in my health, injuries, pain, or medications. It is my responsibility to get medical clearance from a physician before training if I have any condition that may put me at risk, and my coach may require clearance before I begin or continue training."],
+    ["Listening to My Body","I will follow my coach's instructions, use proper technique, and stop exercising and tell my coach immediately if I feel pain, dizziness, chest discomfort, shortness of breath, or anything unusual."],
+    ["Release of Liability","To the fullest extent permitted by law, I release, waive, discharge, and agree not to sue Katalyst Performance, Kaleigh Edwards, and their owners, coaches, staff, contractors, and any facilities used (the “Released Parties”) for any and all claims, demands, losses, or liability for injury, illness, death, or property damage arising from my participation in training, including claims arising from the ordinary negligence of the Released Parties. This release does not apply to gross negligence or intentional misconduct."],
+    ["Emergency Medical Authorization","In the event of an injury or medical emergency, I authorize Katalyst Performance to call emergency services and obtain emergency medical care for me (or my child). I am responsible for any costs of that care. Katalyst Performance will make every effort to contact my emergency contact or parent/guardian."],
+    ["Privacy","The information on this form is kept confidential and used only to plan safe and effective training. It will not be shared without my permission unless required in an emergency or by law."],
+    ["Training On My Own / Remote Programming","When I complete workouts or programs on my own without a Katalyst coach present, including remote programming, I do so at my own risk. I am responsible for using proper technique, choosing safe loads, checking my equipment and training space, having a spotter when needed, and stopping if I feel pain or unwell."],
+    ["Not Medical Advice","Katalyst Performance coaches are not physicians or licensed medical providers. Nothing Katalyst Performance provides, including training, nutrition, recovery, or mental performance guidance, is medical diagnosis or treatment. I will consult a qualified healthcare provider for any medical concern."],
+    ["Facility, Equipment & Personal Property","I will follow all facility rules and coach instructions, use equipment only as instructed, and report damaged or unsafe equipment right away. Katalyst Performance is not responsible for lost, stolen, or damaged personal property."],
+    ["Scheduling, Cancellation & Payment Policies","I will follow Katalyst Performance's scheduling, late-arrival, cancellation, and payment policies as provided to me, and understand that missed or late-cancelled sessions may be charged according to those policies."],
+    ["Electronic Signature & General Terms","Typing my name below is my legal electronic signature and has the same effect as a handwritten signature. This agreement is governed by the laws of the State of Florida. If any part of it is found invalid, the rest remains in full effect. I have read this entire agreement, had the chance to ask questions, and I am signing it voluntarily."]
+  ];
+
+  /* ---------- build option pills ---------- */
+  function pill(type, name, value){
+    return '<label class="opt-pill"><input type="'+type+'" name="'+escHtml(name)+'" value="'+escHtml(value)+'"><span>'+escHtml(value)+'</span></label>';
+  }
+  document.querySelectorAll("[data-single],[data-multi]").forEach(function(f){
+    var key = f.dataset.single || f.dataset.multi;
+    var type = f.dataset.single ? "radio" : "checkbox";
+    f.querySelector(".opts").innerHTML = (OPTIONS[key]||[]).map(function(v){ return pill(type, key, v); }).join("");
+  });
+  $("comfortRows").innerHTML = COMFORT.map(function(row,i){
+    return '<div class="qrow"><span class="q">'+escHtml(row)+'</span><div class="field" data-single="comfort'+i+'"><div class="opts">'+
+      COMFORT_OPTS.map(function(v){ return pill("radio","comfort"+i,v); }).join("")+'</div></div></div>';
+  }).join("");
+  $("screenRows").innerHTML = SCREEN.map(function(q,i){
+    return '<div class="qrow"><span class="q"><b>'+String(i+1).padStart(2,"0")+'</b>'+escHtml(q)+'<span class="req">*</span></span><div class="field" data-single="hs'+i+'" data-req><div class="opts">'+
+      pill("radio","hs"+i,"No")+pill("radio","hs"+i,"Yes")+'</div></div></div>';
+  }).join("");
+  // Parent-only clause, shown only when the athlete is under 18
+  CLAUSES.push(["Parent / Guardian Consent for a Minor","I am the parent or legal guardian of the athlete named in this intake and have the legal authority to sign for them. I give permission for my child to take part in strength and conditioning training with Katalyst Performance, and I agree to every section above on my own behalf and on my child's behalf. I have reviewed this agreement with my child. I understand that a separate parent/guardian waiver must also be signed before my child's first session.",true]);
+  $("clauses").innerHTML = '<div class="agreement">'+CLAUSES.map(function(c,i){
+    return '<div class="agreement-part"'+(c[2]?' data-minor-only hidden':'')+'><h4><b>'+(i+1)+'.</b>'+escHtml(c[0])+'</h4><p>'+c[1]+'</p></div>';
+  }).join("")+'</div>';
+
+  /* ---------- tabs ---------- */
+  var tabBtnForm=$("tabBtnForm"), tabBtnDash=$("tabBtnDash"), panelForm=$("panelForm"), panelDash=$("panelDash");
+  function showTab(dash){
+    tabBtnForm.classList.toggle("active",!dash); tabBtnForm.setAttribute("aria-selected",String(!dash));
+    tabBtnDash.classList.toggle("active",dash); tabBtnDash.setAttribute("aria-selected",String(dash));
+    panelForm.hidden=dash; panelDash.hidden=!dash;
+  }
+  tabBtnForm.addEventListener("click",function(){showTab(false);});
+  tabBtnDash.addEventListener("click",function(){showTab(true);});
+
+  /* ---------- helpers for choice fields ---------- */
+  function single(key){ var el=document.querySelector('input[name="'+key+'"]:checked'); return el?el.value:""; }
+  function multi(key){ return Array.prototype.map.call(document.querySelectorAll('input[name="'+key+'"]:checked'),function(e){return e.value;}); }
+
+  /* ---------- conditional sections ---------- */
+  function isMinor(){ var v=parseInt($("age").value,10); return !isNaN(v)&&v>0&&v<18; }
+  function anyScreenYes(){ for(var i=0;i<SCREEN.length;i++){ if(single("hs"+i)==="Yes") return true; } return false; }
+  function renumber(){
+    var n=0;
+    document.querySelectorAll("#intakeForm [data-sec]").forEach(function(s){
+      if(s.hidden) return; n++; s.querySelector(".section-num").textContent=String(n).padStart(2,"0");
+    });
+  }
+  function ageKnown(){ var v=parseInt($("age").value,10); return !isNaN(v)&&v>=5&&v<=99; }
+  function updateConditional(){
+    var minor=isMinor(), known=ageKnown();
+    $("parentSection").hidden=!minor;
+    $("ageNeeded").hidden=known;
+    $("consentBody").hidden=!known;
+    $("whoAdult").classList.toggle("on",known&&!minor);
+    $("whoMinor").classList.toggle("on",known&&minor);
+    $("modeAdultNote").hidden=minor;
+    $("modeMinorNote").hidden=!minor;
+    document.querySelectorAll("[data-minor-only]").forEach(function(el){ el.hidden=!minor; });
+    $("sigMinor").hidden=!minor;
+    $("sigAdult").hidden=minor;
+    $("screenExplainWrap").hidden=!anyScreenYes();
+    $("painBlock").hidden=single("currentPain")!=="Yes";
+    renumber();
+  }
+  $("intakeForm").addEventListener("input",updateConditional);
+  $("intakeForm").addEventListener("change",updateConditional);
+  updateConditional();
+
+  // "None" options clear the others and vice versa
+  function exclusiveNone(key,noneVal){
+    document.querySelectorAll('input[name="'+key+'"]').forEach(function(box){
+      box.addEventListener("change",function(){
+        if(!box.checked) return;
+        document.querySelectorAll('input[name="'+key+'"]').forEach(function(o){
+          if(o===box) return;
+          if(box.value===noneVal || o.value===noneVal) o.checked=false;
+        });
+      });
+    });
+  }
+  exclusiveNone("conditions","None of these");
+  exclusiveNone("carry","None");
+
+  $("painLevel").addEventListener("input",function(){ $("painNum").textContent=this.value; });
+  function today(){ try{ return new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"}); }catch(e){ return new Date().toDateString(); } }
+  $("consentDate").value=today();
+
+  /* ---------- schema (labels for summary + dashboard) ---------- */
+  var SCHEMA = [
+    ["Athlete Basics",[["athleteName","Name"],["age","Age"],["dob","Date of birth"],["gender","Gender"],["athleteEmail","Email"],["athletePhone","Phone"],["sport","Sport"],["position","Position / event"],["team","School / team"],["level","Level"],["season","Season status"],["height","Height"],["weight","Weight"]]],
+    ["Goals",[["goals","Main goals"],["topGoals","Top 3 goals"],["events","Upcoming events"],["coachNotes","About them as an athlete"]]],
+    ["Training History",[["experience","Experience"],["daysPerWeek","Current days/week"],["comfort","Comfort with movements"],["currentProgram","Current program"],["sessionsWanted","Sessions/week wanted"],["days","Days"],["times","Times"],["setup","Setup"],["equipment","Equipment"]]],
+    ["Health Screening",[["screen","Screening answers"],["screenExplain","Explanation"]]],
+    ["Medical History",[["conditions","Conditions"],["conditionsOther","Other conditions"],["medications","Medications"],["allergies","Allergies"],["carry","Carries"],["pregnant","Pregnant / postpartum"],["lastPhysical","Last physical"],["cleared","Physician cleared"],["medicalOther","Other medical info"]]],
+    ["Injury History",[["currentPain","Current pain / injury"],["painAreas","Pain areas"],["painLevel","Pain level (0–10)"],["painDescribe","Description"],["seeingProvider","Seeing a provider"],["pastInjuries","Past injuries"],["surgeries","Surgeries"],["concussions","Concussions"],["lastConcussion","Most recent concussion"],["avoid","Avoid / painful movements"]]],
+    ["Lifestyle & Recovery",[["sleepHours","Sleep hours"],["sleepQuality","Sleep quality (1–5)"],["stress","Stress (1–5)"],["energy","Energy (1–5)"],["schedule","Weekly schedule"],["mpInterest","Mental performance interest"]]],
+    ["Emergency & Logistics",[["emName","Emergency contact"],["emRelationship","Relationship"],["emPhone","Emergency phone"],["physician","Physician"],["contactPreference","Best way to reach"],["howHeard","How they heard"],["notes","Notes"]]],
+    ["Parent / Guardian",[["parentName","Name"],["parentRelationship","Relationship"],["parentEmail","Email"],["parentPhone","Phone"]]],
+    ["Consent",[["consentFor","Signed by"],["consentDate","Date"],["clausesAgreed","Sections agreed"],["photoRelease","Photo / video"],["athleteSignature","Athlete signature"],["parentSignature","Parent signature"]]]
+  ];
+  var TEXT_IDS = ["athleteName","dob","gender","athleteEmail","athletePhone","sport","position","team","level","season","height","weight","topGoals","events","coachNotes","currentProgram","equipment","screenExplain","conditionsOther","medications","allergies","pregnant","lastPhysical","cleared","medicalOther","painDescribe","pastInjuries","surgeries","concussions","lastConcussion","avoid","schedule","emName","emRelationship","emPhone","physician","contactPreference","howHeard","parentName","parentRelationship","parentEmail","parentPhone"];
+
+  function collect(){
+    var minor=isMinor(), d={submittedAt:new Date().toISOString(), status:"new"};
+    TEXT_IDS.forEach(function(id){ var el=$(id); if(el.closest("[hidden]")) { d[id]=""; return; } d[id]=el.value.trim(); });
+    d.age=parseInt($("age").value,10)||null;
+    ["goals","days","times","conditions","carry","painAreas"].forEach(function(k){ d[k]=multi(k); });
+    ["experience","daysPerWeek","sessionsWanted","setup","currentPain","seeingProvider","sleepHours","sleepQuality","stress","energy","mpInterest","photoRelease"].forEach(function(k){ d[k]=single(k); });
+    if(d.currentPain!=="Yes"){ d.painAreas=[]; d.seeingProvider=""; d.painLevel=null; } else { d.painLevel=parseInt($("painLevel").value,10); }
+    d.comfort={}; COMFORT.forEach(function(r,i){ var v=single("comfort"+i); if(v) d.comfort[r]=v; });
+    d.screen={}; SCREEN.forEach(function(q,i){ d.screen[q]=single("hs"+i); });
+    d.hasParentSection=minor;
+    d.consentDate=$("consentDate").value;
+    var shown=CLAUSES.filter(function(c){ return minor||!c[2]; });
+    var agreed=minor?$("parentAgree").checked:$("adultAgree").checked;
+    d.consentFor=minor?"Parent / guardian (athlete under 18)":"Adult athlete (18+)";
+    d.clausesAgreed=agreed?"Agreed to all "+shown.length+" sections":"Not agreed";
+    d.athleteSignature=minor?$("athleteSignatureMinor").value.trim():$("adultSignature").value.trim();
+    d.parentSignature=minor?$("parentSignature").value.trim():"";
+    d.needsClearance=needsClearance(d);
+    return d;
+  }
+  function flagsFor(d){
+    var f=[];
+    if(d.screen){ SCREEN.forEach(function(q){ if(d.screen[q]==="Yes") f.push("Screening: "+q); }); }
+    if(d.cleared && d.cleared!=="Yes") f.push("Physician clearance: "+d.cleared);
+    if(d.currentPain==="Yes") f.push("Current pain/injury"+(d.painAreas&&d.painAreas.length?" ("+d.painAreas.join(", ")+")":"")+(d.painLevel!=null?", "+d.painLevel+"/10":""));
+    if(d.pregnant==="Yes") f.push("Pregnant or under 12 months postpartum");
+    if(d.concussions==="2"||d.concussions==="3 or more") f.push("Concussion history: "+d.concussions);
+    if(d.conditions&&d.conditions.length&&d.conditions[0]!=="None of these") f.push("Conditions: "+d.conditions.join(", "));
+    return f;
+  }
+  function needsClearance(d){ return flagsFor(d).length>0; }
+
+  /* ---------- validation ---------- */
+  function validate(){
+    var form=$("intakeForm"), first=null;
+    form.querySelectorAll(".invalid").forEach(function(e){ e.classList.remove("invalid"); });
+    function bad(el){ el.classList.add("invalid"); if(!first) first=el; }
+    form.querySelectorAll("input[required],textarea[required],select[required]").forEach(function(el){
+      if(el.closest("[hidden]")) return;
+      if(el.type==="checkbox"){ if(!el.checked) bad(el.closest(".clause")||el.closest(".agree")||el); }
+      else if(!String(el.value||"").trim()) bad(el);
+    });
+    form.querySelectorAll("[data-req]").forEach(function(f){
+      if(f.closest("[hidden]")) return;
+      var key=f.dataset.single||f.dataset.multi;
+      if(!document.querySelector('input[name="'+key+'"]:checked')) bad(f);
+    });
+    var age=parseInt($("age").value,10);
+    if(isNaN(age)||age<5||age>99) bad($("age"));
+    ["athleteEmail","parentEmail"].forEach(function(id){ var el=$(id); if(!el.closest("[hidden]") && el.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim())) bad(el); });
+    return first;
+  }
+
+  /* ---------- plain-text summary ---------- */
+  function fmtVal(k,v){
+    if(v==null||v==="") return "";
+    if(Array.isArray(v)) return v.join(", ");
+    if(typeof v==="object"){ return Object.keys(v).filter(function(q){return v[q];}).map(function(q){ return "  - "+q+": "+v[q]; }).join("\n"); }
+    return String(v);
+  }
+  function summaryText(d){
+    var out=["KATALYST PERFORMANCE — STRENGTH & CONDITIONING INTAKE",""];
+    var flags=flagsFor(d);
+    if(flags.length){ out.push("FLAGS TO REVIEW:"); flags.forEach(function(f){ out.push("  ! "+f); }); out.push(""); }
+    SCHEMA.forEach(function(sec){
+      if(sec[0]==="Parent / Guardian" && !d.hasParentSection) return;
+      var lines=sec[1].map(function(f){ var v=fmtVal(f[0],d[f[0]]); if(!v) return null; return (typeof d[f[0]]==="object"&&!Array.isArray(d[f[0]]))?f[1]+":\n"+v:f[1]+": "+v; }).filter(Boolean);
+      if(lines.length){ out.push("— "+sec[0].toUpperCase()+" —"); out=out.concat(lines); out.push(""); }
+    });
+    return out.join("\n");
+  }
+
+  /* ---------- clipboard ---------- */
+  function copyText(txt,btn,fallbackEl){
+    function done(){ var old=btn.textContent; btn.textContent="Copied"; setTimeout(function(){btn.textContent=old;},1500); }
+    function sel(){ if(fallbackEl){ if(fallbackEl.select) fallbackEl.select(); else { var r=document.createRange(); r.selectNodeContents(fallbackEl); var s=getSelection(); s.removeAllRanges(); s.addRange(r);} } }
+    try{ navigator.clipboard.writeText(txt).then(done).catch(function(){ sel(); }); }catch(e){ sel(); }
+  }
+  $("copySummaryBtn").addEventListener("click",function(){ copyText($("fallbackText").value,this,$("fallbackText")); });
+  $("copyEmailBtn").addEventListener("click",function(){ copyText($("fallbackEmail").textContent,this,$("fallbackEmail")); });
+  $("backToFormBtn").addEventListener("click",function(){ $("fallbackCard").hidden=true; $("intakeForm").hidden=false; });
+  $("submitAnotherBtn").addEventListener("click",function(){
+    $("intakeForm").reset(); $("painNum").textContent="3"; $("consentDate").value=today(); updateConditional();
+    $("thankYouCard").hidden=true; $("intakeForm").hidden=false; window.scrollTo(0,0);
+  });
+
+  /* ---------- capabilities ---------- */
+  var dbP=null, isOwner=false, unsub=null;
+  function getDb(){ if(!dbP){ dbP=(window.claude&&window.claude.use)?window.claude.use("db").catch(function(){return null;}):Promise.resolve(null); } return dbP; }
+  if(window.claude && window.claude.use){
+    window.claude.use("user").then(function(u){
+      if(!u) return;
+      return u.canEdit().then(function(can){ isOwner=!!can; if(isOwner){ tabBtnDash.hidden=false; subscribe(); } });
+    }).catch(function(){});
+  }
+
+  /* ---------- submit ---------- */
+  $("intakeForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var first=validate();
+    $("formErr").hidden=!first;
+    if(first){ first.scrollIntoView({behavior:"smooth",block:"center"}); return; }
+    var data=collect(), btn=$("submitBtn");
+    btn.disabled=true; btn.textContent="Sending…";
+    
+    function ok(){ 
+      btn.disabled=false; 
+      btn.textContent="Submit Intake"; 
+      $("intakeForm").hidden=true; 
+      $("thankYouCard").hidden=false; 
+      window.scrollTo(0,0); 
+    }
+    
+    function fallback(){ 
+      btn.disabled=false; 
+      btn.textContent="Submit Intake"; 
+      $("fallbackText").value=summaryText(data); 
+      $("intakeForm").hidden=true; 
+      $("fallbackCard").hidden=false; 
+      window.scrollTo(0,0); 
+    }
+
+    // Submit structured intake data to Formspree via AJAX
+    fetch("https://formspree.io/f/mljjbkaq", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+    .then(function(response) {
+      if (response.ok) {
+        getDb().then(function(db){
+          if (db) db.collection("submissions").add(data).catch(function(){});
+        }).catch(function(){});
+        ok();
+      } else {
+        fallback();
+      }
+    })
+    .catch(fallback);
+  });
+
+  /* ---------- quick add ---------- */
+  $("addInquiryBtn").addEventListener("click",function(){ $("addInquiryForm").hidden=!$("addInquiryForm").hidden; if(!$("addInquiryForm").hidden) $("qaName").focus(); });
+  function clearQa(){ ["qaName","qaAge","qaSport","qaContact","qaNotes"].forEach(function(id){ $(id).value=""; }); $("qaErr").hidden=true; }
+  $("qaCancelBtn").addEventListener("click",function(){ $("addInquiryForm").hidden=true; clearQa(); });
+  $("qaSaveBtn").addEventListener("click",function(){
+    var name=$("qaName").value.trim(), age=parseInt($("qaAge").value,10);
+    if(!name||isNaN(age)||age<5||age>99){ $("qaErr").textContent="Athlete name and a valid age are required."; $("qaErr").hidden=false; return; }
+    var btn=this; btn.disabled=true; btn.textContent="Saving…";
+    var data={submittedAt:new Date().toISOString(),status:"new",loggedByOwner:true,athleteName:name,age:age,sport:$("qaSport").value.trim(),
+      athletePhone:$("qaContact").value.trim(),howHeard:$("qaSource").value,notes:$("qaNotes").value.trim(),hasParentSection:false,needsClearance:false};
+    getDb().then(function(db){
+      if(!db) throw new Error("no db");
+      return db.collection("submissions").add(data);
+    }).then(function(){ btn.disabled=false; btn.textContent="Save athlete"; $("addInquiryForm").hidden=true; clearQa(); })
+      .catch(function(){ btn.disabled=false; btn.textContent="Save athlete"; $("qaErr").textContent="Couldn't save. Check your connection and try again."; $("qaErr").hidden=false; });
+  });
+
+  /* ---------- dashboard ---------- */
+  var allSubs=[], ageFilter={min:0,max:999}, statusFilter="all", searchTerm="", sortMode="new", openIds={};
+  function subscribe(){
+    getDb().then(function(db){
+      if(!db||unsub) return;
+      unsub=db.collection("submissions").orderBy("submittedAt","desc").limit(500).onSnapshot(function(snap){
+        allSubs=snap.docs.map(function(doc){ var d=doc.data()||{}; d.id=doc.id; return d; });
+        renderDash();
+      },function(){ renderDash(); });
+    });
+  }
+  $("ageChips").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; this.querySelectorAll(".chip").forEach(function(c){c.classList.remove("active");}); b.classList.add("active"); ageFilter={min:+b.dataset.min,max:+b.dataset.max}; renderDash(); });
+  $("statusChips").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; this.querySelectorAll(".chip").forEach(function(c){c.classList.remove("active");}); b.classList.add("active"); statusFilter=b.dataset.status; renderDash(); });
+  $("searchInput").addEventListener("input",function(){ searchTerm=this.value.trim().toLowerCase(); renderDash(); });
+  $("sortSelect").addEventListener("change",function(){ sortMode=this.value; renderDash(); });
+
+  function fmtDate(iso){ try{ var d=new Date(iso); return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); }catch(e){ return ""; } }
+  function initials(n){ n=(n||"").trim(); if(!n) return "?"; var p=n.split(/\s+/); return ((p[0]||"")[0]||"").toUpperCase()+((p[1]||"")[0]||"").toUpperCase(); }
+
+  function renderStats(){
+    var week=Date.now()-7*864e5;
+    var tiles=[["Total athletes",allSubs.length,""],["New",allSubs.filter(function(s){return (s.status||"new")==="new";}).length,""],
+      ["This week",allSubs.filter(function(s){return new Date(s.submittedAt).getTime()>=week;}).length,""],
+      ["Needs clearance",allSubs.filter(function(s){return s.needsClearance;}).length,"flag"]];
+    $("statRow").innerHTML=tiles.map(function(t){ return '<div class="stat-tile '+t[2]+'"><div class="n">'+t[1]+'</div><div class="l">'+t[0]+'</div></div>'; }).join("");
+  }
+  function renderDash(){
+    renderStats();
+    $("emptyState").hidden=allSubs.length>0;
+    var list=allSubs.filter(function(s){
+      var a=typeof s.age==="number"?s.age:-1;
+      if(a<ageFilter.min||a>ageFilter.max) return false;
+      if(statusFilter==="flag"){ if(!s.needsClearance) return false; }
+      else if(statusFilter!=="all" && (s.status||"new")!==statusFilter) return false;
+      if(searchTerm && [s.athleteName,s.sport,s.team].join(" ").toLowerCase().indexOf(searchTerm)===-1) return false;
+      return true;
+    });
+    list.sort(function(a,b){
+      if(sortMode==="old") return new Date(a.submittedAt)-new Date(b.submittedAt);
+      if(sortMode==="age-asc") return (a.age||0)-(b.age||0);
+      if(sortMode==="age-desc") return (b.age||0)-(a.age||0);
+      return new Date(b.submittedAt)-new Date(a.submittedAt);
+    });
+    if(allSubs.length && !list.length){ $("entryList").innerHTML='<div class="empty-state"><h3>No matches</h3><p>No athletes match these filters.</p></div>'; return; }
+    $("entryList").innerHTML=list.map(renderEntry).join("");
+  }
+  $("entryList").addEventListener("click",function(e){
+    if(e.target.closest(".status-select")) return;
+    var head=e.target.closest(".entry-head"); if(!head) return;
+    var entry=head.closest(".entry"), id=entry.dataset.id;
+    openIds[id]=!openIds[id];
+    entry.classList.toggle("open",!!openIds[id]);
+    entry.querySelector(".entry-detail").hidden=!openIds[id];
+    head.setAttribute("aria-expanded",String(!!openIds[id]));
+  });
+  $("entryList").addEventListener("keydown",function(e){
+    var head=e.target.closest(".entry-head"); if(!head) return;
+    if(e.key==="Enter"||e.key===" "){ e.preventDefault(); head.click(); }
+  });
+  $("entryList").addEventListener("change",function(e){
+    var sel=e.target.closest(".status-select"); if(!sel) return;
+    sel.className="status-select status-"+sel.value;
+    getDb().then(function(db){ if(db) db.collection("submissions").doc(sel.dataset.id).update({status:sel.value,statusUpdatedAt:new Date().toISOString()}).catch(function(){}); });
+  });
+
+  function renderEntry(s){
+    var st=s.status||"new", open=!!openIds[s.id];
+    var flags=flagsFor(s);
+    var html='';
+    if(flags.length){ html+='<div class="detail-section-label">Review before first session</div><ul class="flag-list">'+flags.map(function(f){return '<li>'+escHtml(f)+'</li>';}).join("")+'</ul>'; }
+    SCHEMA.forEach(function(sec){
+      if(sec[0]==="Parent / Guardian" && !s.hasParentSection) return;
+      var items=sec[1].map(function(f){
+        var raw=s[f[0]], v=fmtVal(f[0],raw); if(!v) return "";
+        if(f[0]==="screen"){
+          var yes=Object.keys(raw).filter(function(q){return raw[q]==="Yes";});
+          v=yes.length?yes.length+" yes, see flags above":"All no";
+          return '<div class="detail-item"><div class="k">'+escHtml(f[1])+'</div><div class="v'+(yes.length?' yes':'')+'">'+escHtml(v)+'</div></div>';
+        }
+        return '<div class="detail-item"><div class="k">'+escHtml(f[1])+'</div><div class="v">'+escHtml(v)+'</div></div>';
+      }).join("");
+      if(items) html+='<div class="detail-section-label">'+escHtml(sec[0])+'</div><div class="detail-grid">'+items+'</div>';
+    });
+    if(s.loggedByOwner) html+='<p class="hint" style="margin-top:14px">Logged manually. Full intake not completed yet.</p>';
+    var flagPill = s.loggedByOwner ? '<span class="pill pill-age">Intake pending</span>' : (s.needsClearance?'<span class="pill pill-flag">Needs clearance</span>':'<span class="pill pill-ok">Cleared to start</span>');
+    return '<div class="entry'+(open?' open':'')+'" data-id="'+escHtml(s.id)+'">'+
+      '<div class="entry-head" role="button" tabindex="0" aria-expanded="'+open+'">'+
+        '<div class="entry-avatar">'+escHtml(initials(s.athleteName))+'</div>'+
+        '<div class="entry-main"><div class="entry-name">'+escHtml(s.athleteName||"Unnamed athlete")+'</div>'+
+        '<div class="entry-meta">'+escHtml(s.sport||"—")+' · '+escHtml(s.level||s.team||"—")+' · '+escHtml(fmtDate(s.submittedAt))+'</div></div>'+
+        '<div class="entry-side"><span class="pill pill-age">Age '+escHtml(s.age!=null?s.age:"—")+'</span>'+flagPill+
+          '<select class="status-select status-'+st+'" data-id="'+escHtml(s.id)+'" aria-label="Status">'+
+          [["new","New"],["contacted","Contacted"],["active","Active"],["inactive","Inactive"]].map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===st?' selected':'')+'>'+o[1]+'</option>'; }).join("")+'</select>'+
+          '<svg class="chev-btn" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+        '</div></div>'+
+      '<div class="entry-detail"'+(open?'':' hidden')+'>'+html+'</div></div>';
+  }
+})();
+</script>
+
+</body></html>
